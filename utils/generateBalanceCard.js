@@ -31,9 +31,8 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    // Text shadow
     ctx.shadowColor = "rgba(0,0,0,0.8)";
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 6;
 
 
     // Username
@@ -43,11 +42,11 @@ async function generateBalanceCard(user, data) {
     ctx.fillText(
         user.username,
         250,
-        160
+        150
     );
 
 
-    // Main Balance
+    // Balance (main)
     ctx.fillStyle = "#FFD700";
     ctx.font = "bold 90px Arial";
 
@@ -58,57 +57,36 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    // Stats
+    // Smaller information
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 45px Arial";
 
 
     ctx.fillText(
-        `💰 Balance: ${Number(data.balance || 0).toLocaleString()}`,
-        180,
+        `Vault: ${Number(data.vault || 0).toLocaleString()}`,
+        250,
         470
     );
 
 
     ctx.fillText(
-        `🏦 Vault: ${Number(data.vault || 0).toLocaleString()}`,
-        180,
+        `Wagered: ${Number(data.wagered || 0).toLocaleString()}`,
+        250,
         550
     );
 
 
     ctx.fillText(
-        `🎲 Wagered: ${Number(data.wagered || 0).toLocaleString()}`,
-        180,
-        630
-    );
-
-
-    ctx.fillText(
-        `🏆 Won: ${Number(data.won || 0).toLocaleString()}`,
-        850,
+        `Level: ${Number(data.level || 1)}`,
+        900,
         470
     );
 
 
     ctx.fillText(
-        `📉 Lost: ${Number(data.lost || 0).toLocaleString()}`,
-        850,
+        `XP: ${Number(data.xp || 0).toLocaleString()}`,
+        900,
         550
-    );
-
-
-    ctx.fillText(
-        `⭐ Level: ${Number(data.level || 1)}`,
-        850,
-        630
-    );
-
-
-    ctx.fillText(
-        `✨ XP: ${Number(data.xp || 0).toLocaleString()}`,
-        850,
-        710
     );
 
 
