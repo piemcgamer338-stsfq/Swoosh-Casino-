@@ -1,31 +1,21 @@
 const {
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder
+    ButtonStyle
 } = require("discord.js");
-
 
 const blackjackGames = require("../../games/blackjackManager");
 
-
 const {
     randomCard,
-    handValue,
-    isBlackjack,
-    isBust,
-    dealerPlay,
-    getResult
+    isBlackjack
 } = require("../../utils/blackjackLogic");
-
 
 const {
     gameEmbed
 } = require("../../utils/blackjackRenderer");
 
-
 const balanceService = require("../../services/balanceService");
-
 
 
 module.exports = {
@@ -35,7 +25,6 @@ module.exports = {
     aliases: ["bj"],
 
 
-
     async execute(message, args) {
 
 
@@ -43,24 +32,21 @@ module.exports = {
 
 
         if (!bet || bet <= 0) {
-
             return message.reply(
-                "❌ Enter a valid bet amount."
+                "❌ Enter a valid bet."
             );
-
         }
 
 
 
-        const canPlay =
+        const hasMoney =
             await balanceService.hasBalance(
                 message.author.id,
                 bet
             );
 
 
-
-        if (!canPlay) {
+        if (!hasMoney) {
 
             return message.reply(
                 "❌ You don't have enough balance."
@@ -78,66 +64,50 @@ module.exports = {
 
 
 
-        const player = [
-            randomCard(),
-            randomCard()
-        ];
-
-
-        const dealer = [
-            randomCard(),
-            randomCard()
-        ];
-
-
-
         const game = {
 
             userId: message.author.id,
 
             bet,
 
-            player,
+            player: [
+                randomCard(),
+                randomCard()
+            ],
 
-            dealer,
+            dealer: [
+                randomCard(),
+                randomCard()
+            ],
 
-            finished:false,
-
-            insurance:false
+            finished:false
 
         };
 
 
 
-        if (isBlackjack(player)) {
+        if (isBlackjack(game.player)) {
+
 
             await balanceService.addBalance(
                 message.author.id,
                 bet * 2,
-                "blackjack_win"
+                "blackjack_blackjack"
             );
-
-
-            game.finished = true;
-
-
-            const embed =
-                gameEmbed(
-                    game,
-                    true
-                );
 
 
             return message.reply({
 
                 content:
-                "🃏 **BLACKJACK! You win!**\n💰 Payout: **" 
-                + (bet * 2) + " Points**",
+                `🃏 **BLACKJACK!**\n💰 Won: **${bet * 2} Points**`,
 
-
-                ...embed
+                ...gameEmbed(
+                    game,
+                    true
+                )
 
             });
+
 
         }
 
@@ -147,8 +117,7 @@ module.exports = {
         await message.reply({
 
             content:
-            `🃏 **Blackjack Started**\nBet: **${bet} Points**`,
-
+            `🃏 **Blackjack Started**\n💰 Bet: **${bet} Points**`,
 
             ...gameEmbed(
                 game,
@@ -163,32 +132,15 @@ module.exports = {
                 .addComponents(
 
                     new ButtonBuilder()
-
                     .setCustomId("bj_hit")
-
                     .setLabel("Hit")
-
                     .setStyle(ButtonStyle.Success),
 
 
-
                     new ButtonBuilder()
-
                     .setCustomId("bj_stand")
-
                     .setLabel("Stand")
-
-                    .setStyle(ButtonStyle.Danger),
-
-
-
-                    new ButtonBuilder()
-
-                    .setCustomId("bj_insurance")
-
-                    .setLabel("Insurance")
-
-                    .setStyle(ButtonStyle.Secondary)
+                    .setStyle(ButtonStyle.Danger)
 
                 )
 
@@ -210,131 +162,3 @@ module.exports = {
     }
 
 };
-// CONTINUE FROM PART 1
-
-
-// (inside the same blackjack.js file)
-// No extra module needed here.
-// Part 3 will finish the file.
-
-
-async function finishGame(
-    interaction,
-    game
-) {
-
-
-    dealerPlay(
-        game.dealer
-    );
-
-
-    game.finished = true;
-
-
-
-    const result =
-        getResult(
-            game.player,
-            game.dealer
-        );
-
-
-
-    let content = "";
-
-
-
-    if (result === "win") {
-
-
-        const payout =
-            game.bet * 2;
-
-
-
-        await balanceService.addBalance(
-
-            game.userId,
-
-            payout,
-
-            "blackjack_win"
-
-        );
-
-
-
-        content =
-        `🎉 **You Win!**\n💰 Payout: **${payout} Points**`;
-
-
-    }
-
-
-
-    else if (result === "push") {
-
-
-        await balanceService.addBalance(
-
-            game.userId,
-
-            game.bet,
-
-            "blackjack_push"
-
-        );
-
-
-        content =
-        `🤝 **Push!**\n💰 Bet refunded: **${game.bet} Points**`;
-
-
-    }
-
-
-
-    else {
-
-
-        content =
-        "💀 **Dealer Wins!**";
-
-
-    }
-
-
-
-    blackjackGames.delete(
-
-        interaction.message.id
-
-    );
-
-
-
-    return interaction.update({
-
-        content,
-
-
-        ...gameEmbed(
-
-            game,
-
-            true
-
-        ),
-
-
-        components:[]
-
-    });
-
-
-}
-
-
-
-module.exports.finishGame = finishGame;
