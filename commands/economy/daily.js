@@ -1,71 +1,59 @@
-const balanceService = require("../../services/balanceService");
-const embed = require("../../utils/embed");
-const config = require("../../config/config");
 const userService = require("../../services/userService");
-const db = require("../../database/database");
+const format = require("../../utils/format");
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS daily_claims (
-    discord_id TEXT PRIMARY KEY,
-    last_claim INTEGER NOT NULL
-);
-`);
-
-const DAY = 24 * 60 * 60 * 1000;
 
 module.exports = {
+
     name: "daily",
-    aliases: ["claim"],
+    aliases: ["d"],
+
 
     async execute(message) {
-        const userId = message.author.id;
 
-        userService.getUser(userId);
 
-        const data = db.prepare(
-            "SELECT * FROM daily_claims WHERE discord_id = ?"
-        ).get(userId);
+        const user =
+            await userService.getUser(
+                message.author.id
+            );
 
-        const now = Date.now();
 
-        if (data) {
-            const remaining = DAY - (now - data.last_claim);
+        const reward = 400;
 
-            if (remaining > 0) {
-                const hours = Math.floor(remaining / 3600000);
-                const minutes = Math.floor((remaining % 3600000) / 60000);
 
-                return message.reply({
-                    embeds: [
-                        embed.error(
-                            `You already claimed your daily reward.\n\nTry again in **${hours}h ${minutes}m**.`
-                        )
-                    ]
-                });
-            }
-
-            db.prepare(
-                "UPDATE daily_claims SET last_claim = ? WHERE discord_id = ?"
-            ).run(now, userId);
-
-        } else {
-            db.prepare(
-                "INSERT INTO daily_claims (discord_id, last_claim) VALUES (?, ?)"
-            ).run(userId, now);
-        }
-
-        balanceService.addBalance(
-            userId,
-            config.economy.dailyReward,
-            "daily"
+        await userService.updateBalance(
+            message.author.id,
+            reward
         );
 
+
+        const updated =
+            await userService.getUser(
+                message.author.id
+            );
+
+
         return message.reply({
-            embeds: [
-                embed.success(
-                    `You claimed **${config.economy.dailyReward.toLocaleString()} Points**!`
-                )
+
+            embeds:[
+
+                {
+                    title:"🎁 Daily Reward",
+
+                    description:
+                    [
+                        `💰 Claimed: **${format.formatUSD(reward)}**`,
+                        "",
+                        `💳 Balance: **${format.formatUSD(updated.balance)}**`
+                    ].join("\n"),
+
+                    color:0x00ff00
+                }
+
             ]
+
         });
+
+
     }
+
 };
