@@ -1,9 +1,7 @@
 const blackjackGames = require("../games/blackjackManager");
 
 const {
-    randomCard,
-    handValue,
-    isBust
+    handValue
 } = require("../utils/blackjackLogic");
 
 const {
@@ -38,19 +36,44 @@ module.exports = {
                 ephemeral: true
             });
 
-        game.player.push(
-            randomCard()
-        );
+        const suits = ["♠","♥","♦","♣"];
+        const values = [
+            "A","2","3","4","5","6","7",
+            "8","9","10","J","Q","K"
+        ];
 
-        if (isBust(game.player)) {
+        game.player.push({
+
+            suit: suits[
+                Math.floor(
+                    Math.random() * suits.length
+                )
+            ],
+
+            value: values[
+                Math.floor(
+                    Math.random() * values.length
+                )
+            ]
+
+        });
+
+        if (handValue(game.player) > 21) {
 
             game.finished = true;
 
+            blackjackGames.delete(
+                interaction.message.id
+            );
+
             return interaction.update({
 
-                content: "💥 **Bust! You Lose!**",
+                content: "💀 **Bust! Dealer Wins!**",
 
-                ...gameEmbed(game, true),
+                ...gameEmbed(
+                    game,
+                    true
+                ),
 
                 components: []
 
@@ -58,16 +81,12 @@ module.exports = {
 
         }
 
-        blackjackGames.update(
-            interaction.message.id,
-            game
-        );
-
         return interaction.update({
 
-            ...gameEmbed(game, false),
-
-            components: interaction.message.components
+            ...gameEmbed(
+                game,
+                false
+            )
 
         });
 
