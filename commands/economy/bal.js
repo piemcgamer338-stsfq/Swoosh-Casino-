@@ -1,6 +1,5 @@
-const { AttachmentBuilder } = require("discord.js");
 const userService = require("../../services/userService");
-const generateBalanceCard = require("../../utils/generateBalanceCard");
+const embed = require("../../utils/embed");
 
 module.exports = {
 
@@ -13,29 +12,34 @@ module.exports = {
             message.mentions.users.first() ||
             message.author;
 
+
         const user =
             await userService.getUser(target.id);
+
 
         if (!user) {
             return message.reply("❌ User not found.");
         }
 
-        const image =
-            await generateBalanceCard(
-                target,
-                user
-            );
-
-        const attachment =
-            new AttachmentBuilder(
-                image,
-                {
-                    name: "balance.png"
-                }
-            );
 
         return message.reply({
-            files: [attachment]
+
+            embeds: [
+
+                embed.createEmbed(
+                    `${target.username}'s Balance`,
+                    [
+                        `💰 **Balance:** ${(Number(user.balance) || 0).toLocaleString()} Points`,
+                        `🏦 **Vault:** ${(Number(user.vault) || 0).toLocaleString()} Points`,
+                        ``,
+                        `🎲 **Wagered:** ${(Number(user.wagered) || 0).toLocaleString()}`,
+                        `⭐ **Level:** ${Number(user.level) || 1}`,
+                        `✨ **XP:** ${(Number(user.xp) || 0).toLocaleString()}`
+                    ].join("\n")
+                )
+
+            ]
+
         });
 
     }
