@@ -6,12 +6,7 @@ const {
 } = require("discord.js");
 
 const blackjackGames = require("../../games/blackjackManager");
-
-const {
-    createCanvas,
-    loadImage
-} = require("@napi-rs/canvas");
-
+const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const fs = require("fs");
 const path = require("path");
 
@@ -35,19 +30,20 @@ function randomCard(){
 }
 
 
+function drawCardName(card){
 
-function cardFile(card){
+    if(!card || !card.suit || !card.value){
+        console.log("INVALID CARD:", card);
+        return "invalid";
+    }
 
-    if(!card || !card.suit || !card.value)
-        return "card-back.png";
-
-    return `${card.suit}${card.value}.png`;
+    return `${card.suit}${card.value}`;
 
 }
 
 
 
-async function safeLoadCard(file){
+async function loadCard(file){
 
     const location = path.join(
         process.cwd(),
@@ -59,13 +55,9 @@ async function safeLoadCard(file){
 
     if(!fs.existsSync(location)){
 
-        console.log(
-            "Missing blackjack image:",
-            location
-        );
+        console.log("Missing card image:", location);
 
         return null;
-
     }
 
 
@@ -75,34 +67,20 @@ async function safeLoadCard(file){
 
 
 
+async function createBlackjackImage(player=[], dealer=[]){
 
 
-async function createBlackjackImage(player,dealer){
+    const canvas = createCanvas(1200,700);
 
-
-    const canvas =
-        createCanvas(
-            1200,
-            700
-        );
-
-
-    const ctx =
-        canvas.getContext("2d");
-
+    const ctx = canvas.getContext("2d");
 
 
     ctx.fillStyle="#111827";
-    ctx.fillRect(
-        0,
-        0,
-        1200,
-        700
-    );
+    ctx.fillRect(0,0,1200,700);
 
 
 
-    ctx.fillStyle="#ffffff";
+    ctx.fillStyle="white";
     ctx.font="40px Arial";
 
 
@@ -125,20 +103,26 @@ async function createBlackjackImage(player,dealer){
 
 
 
-    for(
-        let i=0;
-        i<dealer.length;
-        i++
-    ){
-
-        const file =
-            i===0
-            ? "card-back.png"
-            : cardFile(dealer[i]);
+    for(let i=0;i<dealer.length;i++){
 
 
-        const img =
-            await safeLoadCard(file);
+        let filename;
+
+
+        if(i===0){
+
+            filename="card-back.png";
+
+        }
+        else{
+
+            filename=`${drawCardName(dealer[i])}.png`;
+
+        }
+
+
+
+        const img = await loadCard(filename);
 
 
 
@@ -155,6 +139,7 @@ async function createBlackjackImage(player,dealer){
         }
 
 
+
         x+=150;
 
     }
@@ -165,15 +150,16 @@ async function createBlackjackImage(player,dealer){
     x=80;
 
 
-    for(
-        const card of player
-    ){
+    for(const card of player){
+
+
+        const filename =
+            `${drawCardName(card)}.png`;
+
 
 
         const img =
-            await safeLoadCard(
-                cardFile(card)
-            );
+            await loadCard(filename);
 
 
 
@@ -204,168 +190,124 @@ async function createBlackjackImage(player,dealer){
 
 
 
+module.exports={
 
 
-module.exports = {
+name:"blackjack",
 
-    name:"blackjack",
+aliases:["bj"],
 
-    aliases:[
-        "bj"
-    ],
 
 
+async execute(message,args){
 
-    async execute(
-        message,
-        args
-    ){
 
+    const bet=Number(args[0]);
 
-        const bet =
-            Number(args[0]);
 
 
+    if(!bet || bet<=0){
 
-        if(
-            !bet ||
-            bet<=0
-        ){
-
-            return message.reply(
-                "❌ Enter a valid bet."
-            );
-
-        }
-
-
-
-        const player=[
-
-            randomCard(),
-            randomCard()
-
-        ];
-
-
-
-        const dealer=[
-
-            randomCard(),
-            randomCard()
-
-        ];
-
-
-
-
-        const image =
-            await createBlackjackImage(
-                player,
-                dealer
-            );
-
-
-
-
-        const msg =
-            await message.reply({
-
-                content:
-                `🃏 **Blackjack**\nBet: **${bet} Points**`,
-
-
-
-                files:[
-
-                    new AttachmentBuilder(
-                        image,
-                        {
-                            name:"blackjack.png"
-                        }
-                    )
-
-                ],
-
-
-
-                components:[
-
-
-                    new ActionRowBuilder()
-
-                    .addComponents(
-
-
-                        new ButtonBuilder()
-
-                        .setCustomId(
-                            "bj_hit"
-                        )
-
-                        .setLabel(
-                            "Hit"
-                        )
-
-                        .setStyle(
-                            ButtonStyle.Success
-                        ),
-
-
-
-                        new ButtonBuilder()
-
-                        .setCustomId(
-                            "bj_stand"
-                        )
-
-                        .setLabel(
-                            "Stand"
-                        )
-
-                        .setStyle(
-                            ButtonStyle.Danger
-                        )
-
-                    )
-
-                ]
-
-            });
-
-
-
-
-        // Save game safely
-
-        if(
-            blackjackGames &&
-            blackjackGames.set
-        ){
-
-            blackjackGames.set(
-
-                msg.id,
-
-                {
-
-                    userId:
-                    message.author.id,
-
-                    bet,
-
-                    player,
-
-                    dealer
-
-                }
-
-            );
-
-        }
-
-
+        return message.reply(
+            "❌ Enter a valid bet."
+        );
 
     }
+
+
+
+    const player=[
+        randomCard(),
+        randomCard()
+    ];
+
+
+    const dealer=[
+        randomCard(),
+        randomCard()
+    ];
+
+
+
+    console.log(
+        "PLAYER:",
+        player
+    );
+
+    console.log(
+        "DEALER:",
+        dealer
+    );
+
+
+
+    const image =
+        await createBlackjackImage(
+            player,
+            dealer
+        );
+
+
+
+    const msg =
+    await message.reply({
+
+        content:
+        `🃏 **Blackjack**\nBet: **${bet} Points**`,
+
+
+        files:[
+            new AttachmentBuilder(
+                image,
+                {
+                    name:"blackjack.png"
+                }
+            )
+        ],
+
+
+        components:[
+
+            new ActionRowBuilder()
+            .addComponents(
+
+                new ButtonBuilder()
+                .setCustomId("bj_hit")
+                .setLabel("Hit")
+                .setStyle(ButtonStyle.Success),
+
+
+                new ButtonBuilder()
+                .setCustomId("bj_stand")
+                .setLabel("Stand")
+                .setStyle(ButtonStyle.Danger)
+
+            )
+
+        ]
+
+    });
+
+
+
+    blackjackGames.set(
+
+        msg.id,
+
+        {
+
+            userId:message.author.id,
+
+            bet,
+
+            player,
+
+            dealer
+
+        }
+
+    );
+
+}
 
 };
