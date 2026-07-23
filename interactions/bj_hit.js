@@ -1,14 +1,14 @@
 const blackjackGames = require("../games/blackjackManager");
 
-function randomCard() {
-    const suits = ["♣","♦","♥","♠"];
-    const values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+const {
+    randomCard,
+    handValue,
+    isBust
+} = require("../utils/blackjackLogic");
 
-    return {
-        suit: suits[Math.floor(Math.random()*suits.length)],
-        value: values[Math.floor(Math.random()*values.length)]
-    };
-}
+const {
+    gameEmbed
+} = require("../utils/blackjackRenderer");
 
 module.exports = {
 
@@ -16,26 +16,59 @@ module.exports = {
 
     async execute(interaction) {
 
-        const game = blackjackGames.get(interaction.message.id);
+        const game = blackjackGames.get(
+            interaction.message.id
+        );
 
         if (!game)
             return interaction.reply({
-                content:"❌ Game expired.",
-                ephemeral:true
+                content: "❌ Game not found.",
+                ephemeral: true
             });
 
         if (interaction.user.id !== game.userId)
             return interaction.reply({
-                content:"❌ This isn't your game.",
-                ephemeral:true
+                content: "❌ This isn't your game.",
+                ephemeral: true
             });
 
-        const card = randomCard();
+        if (game.finished)
+            return interaction.reply({
+                content: "❌ Game already finished.",
+                ephemeral: true
+            });
 
-        game.player.push(card);
+        game.player.push(
+            randomCard()
+        );
 
-        await interaction.reply({
-            content:`🃏 You drew **${card.value}${card.suit}**`
+        if (isBust(game.player)) {
+
+            game.finished = true;
+
+            return interaction.update({
+
+                content: "💥 **Bust! You Lose!**",
+
+                ...gameEmbed(game, true),
+
+                components: []
+
+            });
+
+        }
+
+        blackjackGames.update(
+            interaction.message.id,
+            game
+        );
+
+        return interaction.update({
+
+            ...gameEmbed(game, false),
+
+            components: interaction.message.components
+
         });
 
     }
