@@ -31,13 +31,13 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    const avatar = await loadImage(
-        user.displayAvatarURL({
-            extension: "png",
-            size: 512
-        })
-    );
-
+   const avatar = await loadImage(
+    user.displayAvatarURL({
+        extension: "jpg",
+        size: 512,
+        forceStatic: true
+    })
+);
 
     ctx.save();
 
