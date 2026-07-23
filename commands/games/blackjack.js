@@ -181,7 +181,11 @@ async function createBlackjackImage(player=[], dealer=[]){
     }
 
 
-
+    console.log("DEBUG LINE 185");
+    console.log({
+        player,
+        dealer
+    });
     return canvas.toBuffer();
 
 }
