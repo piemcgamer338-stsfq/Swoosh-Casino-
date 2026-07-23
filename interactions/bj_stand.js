@@ -18,7 +18,6 @@ module.exports = {
 
     customId: "bj_stand",
 
-
     async execute(interaction) {
 
 
@@ -29,48 +28,33 @@ module.exports = {
 
 
         if (!game) {
-
             return interaction.reply({
                 content: "❌ Game not found.",
                 ephemeral: true
             });
-
         }
 
 
-
-        if (
-            interaction.user.id !== game.userId
-        ) {
-
+        if (interaction.user.id !== game.userId) {
             return interaction.reply({
                 content: "❌ This isn't your game.",
                 ephemeral: true
             });
-
         }
 
 
-
         if (game.finished) {
-
             return interaction.reply({
                 content: "❌ Game already finished.",
                 ephemeral: true
             });
-
         }
 
 
-
-        dealerPlay(
-            game.dealer
-        );
-
+        dealerPlay(game.dealer);
 
 
         game.finished = true;
-
 
 
         const result =
@@ -80,9 +64,7 @@ module.exports = {
             );
 
 
-
         let text = "";
-
 
 
         if (result === "win") {
@@ -92,81 +74,68 @@ module.exports = {
                 game.bet * 2;
 
 
-
             await addBalance(
-
                 game.userId,
-
                 payout,
-
                 "blackjack_win"
-
             );
-
 
 
             text =
             `🎉 **You Won!**\n💰 Payout: **${payout} Points**`;
 
 
+        } else if (result === "lose") {
+
+
+            text =
+            `💀 **Dealer Wins!**\n💸 Lost: **${game.bet} Points**`;
+
+
+        } else {
+
+
+            await addBalance(
+                game.userId,
+                game.bet,
+                "blackjack_push"
+            );
+
+
+            text =
+            `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
+
         }
 
 
 
-      else if (result === "lose") {
-
-
-    text =
-    `💀 **Dealer Wins!**\n💸 Lost: **${game.bet} Points**`;
-
-
-}
-
-
-else {
-
-
-    await addBalance(
-
-        game.userId,
-
-        game.bet,
-
-        "blackjack_push"
-
-    );
-
-
-    text =
-    `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
-
-
-}
+        const embedData =
+            gameEmbed(
+                game,
+                true
+            );
 
 
 
-blackjackGames.delete(
-    interaction.message.id
-);
+        blackjackGames.delete(
+            interaction.message.id
+        );
 
 
 
-const embedData =
-    gameEmbed(
-        game,
-        true
-    );
+        return interaction.update({
+
+            content: text,
+
+            embeds: embedData.embeds,
+
+            files: embedData.files,
+
+            components: []
+
+        });
 
 
+    }
 
-return interaction.update({
-
-    content: text,
-
-    embeds: embedData.embeds,
-
-    files: embedData.files,
-
-    components: []
-
-});
+};
