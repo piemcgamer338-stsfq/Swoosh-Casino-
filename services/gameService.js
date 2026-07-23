@@ -3,85 +3,151 @@ const houseService = require("./houseService");
 const balanceService = require("./balanceService");
 const userService = require("./userService");
 
-function shouldForceLose(discordId) {
-    const user = userService.getUser(discordId);
+
+async function shouldForceLose(discordId) {
+
+    const user =
+        await userService.getUser(discordId);
+
     return user.force_lose === 1;
+
 }
 
-function canBet(discordId, amount) {
-    const user = userService.getUser(discordId);
+
+
+async function canBet(discordId, amount) {
+
+    const user =
+        await userService.getUser(discordId);
+
 
     if (amount <= 0) {
+
         return {
             success: false,
             message: "Invalid bet amount."
         };
+
     }
 
-    if (user.balance < amount) {
+
+    if (Number(user.balance) < Number(amount)) {
+
         return {
             success: false,
             message: "You don't have enough balance."
         };
+
     }
+
 
     return {
         success: true
     };
+
 }
 
-function lose(discordId, bet) {
 
-    balanceService.removeBalance(
+
+async function lose(discordId, bet) {
+
+
+    await balanceService.removeBalance(
         discordId,
         bet,
         "game_loss"
     );
 
-    houseService.add(bet);
 
-    db.prepare(`
+    await houseService.add(bet);
+
+
+    await db.query(
+        `
         UPDATE users
         SET
-            wagered = wagered + ?,
+            wagered = wagered + $1,
+            rateback_wagered = rateback_wagered + $1,
             lost = lost + 1
-        WHERE discord_id = ?
-    `).run(bet, discordId);
+        WHERE discord_id = $2
+        `,
+        [
+            bet,
+            discordId
+        ]
+    );
+
 
 }
 
-function win(discordId, bet, multiplier = 2) {
 
-    const payout = Math.floor(bet * multiplier);
 
-    if (!houseService.canPay(payout)) {
+async function win(
+    discordId,
+    bet,
+    multiplier = 2
+) {
+
+
+    const payout =
+        Math.floor(
+            bet * multiplier
+        );
+
+
+    const canPay =
+        await houseService.canPay(
+            payout
+        );
+
+
+    if (!canPay) {
+
         return {
-            success: false,
-            message: "House cannot pay this bet."
+            success:false,
+            message:"House cannot pay this bet."
         };
+
     }
 
-    balanceService.addBalance(
+
+
+    await balanceService.addBalance(
         discordId,
         payout,
         "game_win"
     );
 
-    houseService.remove(payout);
 
-    db.prepare(`
+    await houseService.remove(
+        payout
+    );
+
+
+    await db.query(
+        `
         UPDATE users
         SET
-            wagered = wagered + ?,
+            wagered = wagered + $1,
+            rateback_wagered = rateback_wagered + $1,
             won = won + 1
-        WHERE discord_id = ?
-    `).run(bet, discordId);
+        WHERE discord_id = $2
+        `,
+        [
+            bet,
+            discordId
+        ]
+    );
+
 
     return {
-        success: true,
+        success:true,
         payout
     };
+
 }
+
+
 
 module.exports = {
     shouldForceLose,
