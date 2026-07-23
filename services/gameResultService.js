@@ -1,46 +1,65 @@
 const gameService = require("./gameService");
 const xpService = require("./xpService");
 
-function processWin(discordId, bet, multiplier) {
 
-    const result = gameService.win(
-        discordId,
-        bet,
-        multiplier
-    );
+async function processWin(
+    discordId,
+    bet,
+    multiplier
+) {
+
+    const result =
+        await gameService.win(
+            discordId,
+            bet,
+            multiplier
+        );
+
 
     if (!result.success) {
         return result;
     }
 
-    xpService.addXP(
+
+    await xpService.addXP(
         discordId,
         Math.floor(bet / 10)
     );
+
 
     return {
         success: true,
         payout: result.payout
     };
+
 }
 
 
-function processLoss(discordId, bet) {
 
-    gameService.lose(
+async function processLoss(
+    discordId,
+    bet
+) {
+
+
+    await gameService.lose(
         discordId,
         bet
     );
 
-    xpService.addXP(
+
+    await xpService.addXP(
         discordId,
         Math.floor(bet / 20)
     );
 
+
     return {
-        success: true
+        success:true
     };
+
 }
+
 
 
 module.exports = {
