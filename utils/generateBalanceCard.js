@@ -17,23 +17,9 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    if (!fs.existsSync(bgPath)) {
-        throw new Error(
-            `Balance image missing: ${bgPath}`
-        );
-    }
-
-
-    const imageBuffer = fs.readFileSync(bgPath);
-
-
-    console.log(
-        "BALANCE IMAGE HEADER:",
-        imageBuffer.slice(0, 20).toString()
+    const bg = await loadImage(
+        fs.readFileSync(bgPath)
     );
-
-
-    const bg = await loadImage(imageBuffer);
 
 
     ctx.drawImage(
@@ -45,49 +31,88 @@ async function generateBalanceCard(user, data) {
     );
 
 
+    // Text shadow
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 8;
+
+
+    // Username
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 42px Arial";
+    ctx.font = "bold 55px Arial";
 
     ctx.fillText(
         user.username,
-        280,
-        170
+        250,
+        160
     );
 
 
-    ctx.fillStyle = "#FFD54F";
-    ctx.font = "bold 82px Arial";
+    // Main Balance
+    ctx.fillStyle = "#FFD700";
+    ctx.font = "bold 90px Arial";
 
     ctx.fillText(
         `${Number(data.balance || 0).toLocaleString()} Points`,
-        450,
-        360
+        250,
+        300
     );
 
 
+    // Stats
     ctx.fillStyle = "#ffffff";
-    ctx.font = "40px Arial";
+    ctx.font = "bold 45px Arial";
 
 
     ctx.fillText(
-        `Vault: ${Number(data.vault || 0).toLocaleString()}`,
-        170,
-        720
+        `💰 Balance: ${Number(data.balance || 0).toLocaleString()}`,
+        180,
+        470
     );
 
 
     ctx.fillText(
-        `Wagered: ${Number(data.wagered || 0).toLocaleString()}`,
-        650,
-        720
+        `🏦 Vault: ${Number(data.vault || 0).toLocaleString()}`,
+        180,
+        550
     );
 
 
     ctx.fillText(
-        `Level: ${Number(data.level || 1)}`,
-        1250,
-        720
+        `🎲 Wagered: ${Number(data.wagered || 0).toLocaleString()}`,
+        180,
+        630
     );
+
+
+    ctx.fillText(
+        `🏆 Won: ${Number(data.won || 0).toLocaleString()}`,
+        850,
+        470
+    );
+
+
+    ctx.fillText(
+        `📉 Lost: ${Number(data.lost || 0).toLocaleString()}`,
+        850,
+        550
+    );
+
+
+    ctx.fillText(
+        `⭐ Level: ${Number(data.level || 1)}`,
+        850,
+        630
+    );
+
+
+    ctx.fillText(
+        `✨ XP: ${Number(data.xp || 0).toLocaleString()}`,
+        850,
+        710
+    );
+
+
+    ctx.shadowBlur = 0;
 
 
     return canvas.toBuffer("image/png");
