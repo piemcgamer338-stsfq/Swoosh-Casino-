@@ -113,67 +113,60 @@ module.exports = {
 
 
 
-        else if (result === "lose") {
+      else if (result === "lose") {
 
 
-            text =
-            `💀 **Dealer Wins!**\n💸 Lost: **${game.bet} Points**`;
+    text =
+    `💀 **Dealer Wins!**\n💸 Lost: **${game.bet} Points**`;
 
 
-        }
+}
 
 
-
-        else {
-
-
-            await addBalance(
-
-                game.userId,
-
-                game.bet,
-
-                "blackjack_push"
-
-            );
+else {
 
 
+    await addBalance(
 
-            text =
-            `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
+        game.userId,
+
+        game.bet,
+
+        "blackjack_push"
+
+    );
 
 
-        }
+    text =
+    `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
 
 
-
-        blackjackGames.delete(
-
-            interaction.message.id
-
-        );
+}
 
 
 
-        return interaction.update({
-
-            content: text,
-
-
-            ...gameEmbed(
-
-                game,
-
-                true
-
-            ),
+blackjackGames.delete(
+    interaction.message.id
+);
 
 
-            components: []
 
-        });
+const embedData =
+    gameEmbed(
+        game,
+        true
+    );
 
 
-    }
 
-};
+return interaction.update({
+
+    content: text,
+
+    embeds: embedData.embeds,
+
+    files: embedData.files,
+
+    components: []
+
+});
