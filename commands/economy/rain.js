@@ -8,7 +8,6 @@ const balanceService = require("../../services/balanceService");
 const format = require("../../utils/format");
 
 
-
 const activeRains = new Map();
 
 
@@ -21,6 +20,7 @@ function parseTime(time) {
 
 
     const amount = Number(match[1]);
+
     const type = match[2].toLowerCase();
 
 
@@ -28,6 +28,7 @@ function parseTime(time) {
     if (type === "m") return amount * 60 * 1000;
     if (type === "h") return amount * 60 * 60 * 1000;
 
+    return null;
 }
 
 
@@ -39,10 +40,9 @@ module.exports = {
     aliases: [],
 
 
+
     async execute(message, args) {
 
-
-        // ADMIN ONLY
 
         if (
             !message.member.permissions.has(
@@ -58,12 +58,14 @@ module.exports = {
 
 
 
+
         const amount =
             Number(args[0]);
 
 
         const time =
             args[1];
+
 
 
 
@@ -77,32 +79,41 @@ module.exports = {
 
 
 
+
+
         const duration =
             parseTime(time);
+
 
 
 
         if (!duration) {
 
             return message.reply(
-                "❌ Invalid time.\nExamples: `30m`, `1h`, `45s`"
+                "❌ Invalid time format.\nExamples: `30m`, `1h`, `45s`"
             );
 
         }
+
+
 
 
 
         if (duration > 60 * 60 * 1000) {
 
             return message.reply(
-                "❌ Maximum rain time is 1 hour."
+                "❌ Maximum rain duration is 1 hour."
             );
 
         }
 
 
 
-        if (activeRains.has(message.guild.id)) {
+
+
+        if (
+            activeRains.has(message.guild.id)
+        ) {
 
             return message.reply(
                 "❌ A rain is already active."
@@ -114,7 +125,9 @@ module.exports = {
 
 
 
-        if (!houseService.canPay(amount)) {
+        if (
+            !houseService.canPay(amount)
+        ) {
 
             return message.reply(
                 "❌ House does not have enough balance."
@@ -132,19 +145,18 @@ module.exports = {
             .setTitle("🌧️ Rain Started!")
 
             .setDescription(
-
                 [
                     `💰 Prize Pool: **${format.formatUSD(amount)}**`,
-                    `⏳ Ends in: **${time}**`,
+                    `⏳ Duration: **${time}**`,
                     "",
-                    "React with 🌧️ to join!",
+                    "React with 🌧️ to enter!",
                     "",
-                    "Everyone who joins will receive an equal share."
+                    "Everyone gets an equal share."
                 ].join("\n")
-
             )
 
             .setColor("Blue");
+
 
 
 
@@ -167,8 +179,11 @@ module.exports = {
 
 
 
-        const participants =
-            new Set();
+        activeRains.set(
+            message.guild.id,
+            true
+        );
+
 
 
 
@@ -176,8 +191,7 @@ module.exports = {
         const collector =
             rainMessage.createReactionCollector({
 
-                filter:
-                (reaction,user)=>{
+                filter:(reaction,user)=>{
 
                     return (
                         reaction.emoji.name === "🌧️" &&
@@ -186,31 +200,10 @@ module.exports = {
 
                 },
 
-                time: duration
+                time:duration
 
             });
 
-
-
-
-
-        collector.on(
-            "collect",
-            (reaction,user)=>{
-
-                participants.add(user.id);
-
-            }
-        );
-
-
-
-
-
-        activeRains.set(
-            message.guild.id,
-            true
-        );
 
 
 
@@ -228,12 +221,50 @@ module.exports = {
 
 
 
-                const users =
-                    [...participants];
+
+                let users = [];
 
 
 
-                if(users.length === 0){
+
+
+                const reaction =
+                    rainMessage.reactions.cache.get("🌧️");
+
+
+
+
+
+                if (reaction) {
+
+
+                    const reactedUsers =
+                        await reaction.users.fetch();
+
+
+
+                    users =
+                        reactedUsers
+
+                        .filter(
+                            user => !user.bot
+                        )
+
+                        .map(
+                            user => user.id
+                        );
+
+                }
+
+
+
+
+
+
+
+                if (
+                    users.length === 0
+                ) {
 
 
                     return rainMessage.edit({
@@ -263,6 +294,9 @@ module.exports = {
 
 
 
+
+
+
                 const reward =
                     Math.floor(
                         amount / users.length
@@ -270,12 +304,13 @@ module.exports = {
 
 
 
-                const paid =
-                    reward * users.length;
 
 
 
-                if(reward <= 0){
+                if (
+                    reward <= 0
+                ) {
+
 
                     return rainMessage.edit({
 
@@ -288,7 +323,7 @@ module.exports = {
                             )
 
                             .setDescription(
-                                "Too many players joined."
+                                "Too many participants."
                             )
 
                             .setColor("Red")
@@ -297,6 +332,7 @@ module.exports = {
 
                     });
 
+
                 }
 
 
@@ -304,18 +340,21 @@ module.exports = {
 
 
 
-                let winnersText = "";
+
+                let winnerText = "";
 
 
 
-                for(
-                    const id of users
-                ){
+
+
+                for (
+                    const userId of users
+                ) {
 
 
                     balanceService.addBalance(
 
-                        id,
+                        userId,
 
                         reward,
 
@@ -324,19 +363,22 @@ module.exports = {
                     );
 
 
-                    winnersText +=
-                    `<@${id}> — **${format.formatUSD(reward)}**\n`;
+
+                    winnerText +=
+                    `<@${userId}> — **${format.formatUSD(reward)}**\n`;
 
                 }
 
 
 
 
-                // remove money from house
+
+
 
                 houseService.remove(
-                    paid
+                    reward * users.length
                 );
+
 
 
 
@@ -354,17 +396,20 @@ module.exports = {
                             "🌧️ Rain Finished!"
                         )
 
+
                         .setDescription(
 
                             [
                                 "🏆 Winners:",
                                 "",
-                                winnersText,
+                                winnerText,
                                 "",
-                                `💰 Total Paid: **${format.formatUSD(paid)}**`
+                                `💰 Total Paid: **${format.formatUSD(reward * users.length)}**`
+
                             ].join("\n")
 
                         )
+
 
                         .setColor("Green")
 
@@ -373,8 +418,10 @@ module.exports = {
                 });
 
 
+
             }
         );
+
 
 
     }
