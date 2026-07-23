@@ -1,16 +1,17 @@
 const {
-    createCanvas,
-    loadImage
+    createCanvas
 } = require("@napi-rs/canvas");
 
 const {
     AttachmentBuilder
 } = require("discord.js");
 
-const path = require("path");
-
 
 async function createLimboImage(data){
+
+
+    console.log("🔥 LIMBO RENDERER RUNNING");
+
 
 
     const canvas =
@@ -22,28 +23,11 @@ async function createLimboImage(data){
 
 
 
-    const imagePath =
-        path.join(
-            process.cwd(),
-            "assets",
-            "limbo.png"
-        );
+    // RED TEST BACKGROUND
 
+    ctx.fillStyle = "red";
 
-    console.log(
-        "Loading image:",
-        imagePath
-    );
-
-
-
-    const img =
-        await loadImage(imagePath);
-
-
-
-    ctx.drawImage(
-        img,
+    ctx.fillRect(
         0,
         0,
         1200,
@@ -52,50 +36,41 @@ async function createLimboImage(data){
 
 
 
-    // TEST TEXT
+    ctx.fillStyle="white";
 
-    ctx.fillStyle="#ffffff";
-
-    ctx.font="bold 60px Arial";
+    ctx.font="bold 80px Arial";
 
 
     ctx.fillText(
         "CRASHED AT "+data.crash+"x",
         100,
-        120
-    );
-
-
-    ctx.font="bold 45px Arial";
-
-
-    ctx.fillText(
-        "BET: "+data.bet,
-        100,
         200
     );
 
 
-    ctx.fillText(
-        "TARGET: "+data.target+"x",
-        100,
-        270
-    );
+    ctx.font="bold 50px Arial";
 
+
+    ctx.fillText(
+        "BET "+data.bet,
+        100,
+        300
+    );
 
 
     return new AttachmentBuilder(
 
-        canvas.toBuffer("image/png"),
+        canvas.toBuffer("png"),
 
         {
-            name:"limbo-result.png"
+            name:
+            "NEW-limbo-result.png"
         }
 
     );
 
-}
 
+}
 
 
 module.exports={
