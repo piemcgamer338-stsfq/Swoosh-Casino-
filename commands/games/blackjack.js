@@ -1,45 +1,20 @@
 const {
-    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder
+    ButtonStyle
 } = require("discord.js");
 
 const blackjackGames = require("../../games/blackjackManager");
 
+const {
+    randomCard,
+    handValue,
+    isBlackjack
+} = require("../../utils/blackjackLogic");
 
-function randomCard() {
-
-    const suits = ["♣", "♦", "♥", "♠"];
-
-    const values = [
-        "A",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "J",
-        "Q",
-        "K"
-    ];
-
-    return {
-        value: values[Math.floor(Math.random() * values.length)],
-        suit: suits[Math.floor(Math.random() * suits.length)]
-    };
-}
-
-
-function cardName(card) {
-    return `${card.value}${card.suit}`;
-}
-
+const {
+    gameEmbed
+} = require("../../utils/blackjackRenderer");
 
 module.exports = {
 
@@ -47,122 +22,76 @@ module.exports = {
 
     aliases: ["bj"],
 
-
-    async execute(message,args){
+    async execute(message, args) {
 
         const bet = Number(args[0]);
 
-
-        if(!bet || bet <= 0){
+        if (!bet || bet <= 0) {
             return message.reply("❌ Enter a valid bet.");
         }
-
 
         const player = [
             randomCard(),
             randomCard()
         ];
 
-
         const dealer = [
             randomCard(),
             randomCard()
         ];
 
+        const game = {
 
+            userId: message.author.id,
 
-        const attachment = new AttachmentBuilder(
-            "./assets/blackjack/table.png",
-            {
-                name:"blackjack-table.png"
-            }
-        );
+            bet,
 
+            player,
 
-        const embed = new EmbedBuilder()
+            dealer,
 
-        .setColor("#00b894")
+            finished: false
 
-        .setTitle("🃏 Blackjack")
+        };
 
-        .setDescription(
-`
-**💰 Bet:** ${bet} Points
+        const row = new ActionRowBuilder().addComponents(
 
+            new ButtonBuilder()
+                .setCustomId("bj_hit")
+                .setLabel("Hit")
+                .setStyle(ButtonStyle.Success),
 
-**🎩 Dealer Cards**
-\`\`\`
-${cardName(dealer[0])}  ${cardName(dealer[1])}
-\`\`\`
-
-
-**👤 Your Cards**
-\`\`\`
-${cardName(player[0])}  ${cardName(player[1])}
-\`\`\`
-
-
-Choose your move:
-`
-)
-
-        .setImage("attachment://blackjack-table.png")
-
-        .setFooter({
-            text:"Swoosh Bet Blackjack"
-        });
-
-
-
-        const msg = await message.reply({
-
-            embeds:[
-                embed
-            ],
-
-            files:[
-                attachment
-            ],
-
-
-            components:[
-
-                new ActionRowBuilder()
-
-                .addComponents(
-
-                    new ButtonBuilder()
-                    .setCustomId("bj_hit")
-                    .setLabel("Hit")
-                    .setStyle(ButtonStyle.Success),
-
-
-                    new ButtonBuilder()
-                    .setCustomId("bj_stand")
-                    .setLabel("Stand")
-                    .setStyle(ButtonStyle.Danger)
-
-                )
-
-            ]
-
-        });
-
-
-
-        blackjackGames.set(
-
-            msg.id,
-
-            {
-                userId: message.author.id,
-                bet,
-                player,
-                dealer
-            }
+            new ButtonBuilder()
+                .setCustomId("bj_stand")
+                .setLabel("Stand")
+                .setStyle(ButtonStyle.Danger)
 
         );
 
+        const reply = await message.reply({
+
+            ...gameEmbed(game, false),
+
+            components: [row]
+
+        });
+                blackjackGames.create(reply.id, game);
+
+        if (isBlackjack(player)) {
+
+            game.finished = true;
+
+            return reply.edit({
+
+                ...gameEmbed(game, true),
+
+                content: "🎉 **BLACKJACK! You win!**",
+
+                components: []
+
+            });
+
+        }
 
     }
 
