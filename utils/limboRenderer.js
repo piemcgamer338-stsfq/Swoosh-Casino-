@@ -1,6 +1,5 @@
 const {
-    createCanvas,
-    GlobalFonts
+    createCanvas
 } = require("@napi-rs/canvas");
 
 const {
@@ -8,24 +7,19 @@ const {
 } = require("discord.js");
 
 
-// Register default font
-GlobalFonts.registerFromPath(
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "DejaVu"
-);
-
-
 async function createLimboImage(data) {
 
 
-    const canvas =
-        createCanvas(1200,630);
+    console.log("🔥 LIMBO RENDERER RUNNING");
 
 
-    const ctx =
-        canvas.getContext("2d");
+    const canvas = createCanvas(1200, 630);
+
+    const ctx = canvas.getContext("2d");
 
 
+
+    // background
 
     ctx.fillStyle = "#111111";
 
@@ -38,10 +32,25 @@ async function createLimboImage(data) {
 
 
 
-    ctx.fillStyle = "#00ff88";
+    // big visible test area
 
-    ctx.font =
-        "bold 80px DejaVu";
+    ctx.fillStyle = "#ff0000";
+
+    ctx.fillRect(
+        50,
+        50,
+        1100,
+        200
+    );
+
+
+
+    // text
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.font = "70px Arial";
+
 
     ctx.fillText(
         "LIMBO RESULT",
@@ -51,47 +60,44 @@ async function createLimboImage(data) {
 
 
 
-    ctx.fillStyle = "#ffffff";
-
-    ctx.font =
-        "bold 55px DejaVu";
+    ctx.font = "50px Arial";
 
 
     ctx.fillText(
-        `CRASHED AT ${data.crash}x`,
+        "CRASH: " + String(data.crash),
         100,
-        280
+        350
     );
 
 
     ctx.fillText(
-        `BET ${data.bet}`,
+        "BET: " + String(data.bet),
         100,
-        380
+        430
     );
 
 
     ctx.fillText(
-        `TARGET ${data.target}x`,
+        "TARGET: " + String(data.target),
         100,
-        480
+        510
     );
+
+
+
+    const buffer =
+        canvas.toBuffer("image/png");
 
 
 
     return new AttachmentBuilder(
-
-        canvas.toBuffer("image/png"),
-
+        buffer,
         {
-            name:
-            "limbo-result.png"
+            name: "limbo-test.png"
         }
-
     );
 
 }
-
 
 
 module.exports = {
