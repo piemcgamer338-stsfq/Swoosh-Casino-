@@ -17,41 +17,28 @@ module.exports = {
     async execute(message, args) {
 
 
-        const bet =
-            Number(args[0]);
-
-
-        const target =
-            Number(args[1]);
-
+        const bet = Number(args[0]);
+        const target = Number(args[1]);
 
 
         if (!bet || !target) {
-
             return message.reply(
                 "❌ Usage: `.limbo <bet> <multiplier>`"
             );
-
         }
-
 
 
         if (bet <= 0) {
-
             return message.reply(
                 "❌ Invalid bet."
             );
-
         }
 
 
-
         if (target < 1.1 || target > 100) {
-
             return message.reply(
                 "❌ Multiplier must be between 1.1x and 100x."
             );
-
         }
 
 
@@ -64,34 +51,56 @@ module.exports = {
 
 
         if (!hasBalance) {
-
             return message.reply(
                 "❌ You don't have enough balance."
             );
-
         }
 
 
 
-        /*
-            Limbo logic
+        // Loading message
 
-            Low multipliers:
-            - Better chance
+        const loading =
+            await message.reply({
 
-            High multipliers:
-            - Rare
+                embeds: [
 
-            Max crash = 100x
-        */
+                    new EmbedBuilder()
+
+                    .setColor("#ffaa00")
+
+                    .setTitle("🚀 LIMBO")
+
+                    .setDescription(
+`
+# 🚀 ROCKET LAUNCHING...
+
+💰 Bet: **${bet} Points**
+
+🎯 Target: **${target}x**
+
+Waiting for crash...
+`
+                    )
+
+                ]
+
+            });
+
+
+
+        // 3 second delay
+
+        await new Promise(
+            resolve => setTimeout(resolve, 3000)
+        );
+
 
 
         let crash;
 
 
-
-        const roll =
-            Math.random();
+        const roll = Math.random();
 
 
 
@@ -115,7 +124,7 @@ module.exports = {
             }
 
 
-        }
+        } 
 
         else {
 
@@ -153,6 +162,7 @@ module.exports = {
 
         if (win) {
 
+
             payout =
                 Math.floor(
                     bet * target
@@ -182,7 +192,8 @@ module.exports = {
 
 
 
-        const embed =
+        const resultEmbed =
+
             new EmbedBuilder()
 
             .setColor(
@@ -193,7 +204,7 @@ module.exports = {
 
 
             .setTitle(
-                "🚀 LIMBO"
+                "🚀 LIMBO RESULT"
             )
 
 
@@ -231,10 +242,12 @@ win
 
 
 
-        await message.reply({
+        await loading.edit({
+
             embeds:[
-                embed
+                resultEmbed
             ]
+
         });
 
 
