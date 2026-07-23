@@ -6,17 +6,30 @@ const {
 } = require("discord.js");
 
 const blackjackGames = require("../../games/blackjackManager");
-const { createCanvas, loadImage } = require("@napi-rs/canvas");
-const fs = require("fs");
-const path = require("path");
+const { createCanvas } = require("@napi-rs/canvas");
 
 
-const suits = ["C", "D", "H", "S"];
+const suits = [
+    "♠",
+    "♥",
+    "♦",
+    "♣"
+];
 
 const values = [
     "A",
-    "2","3","4","5","6","7","8","9","10",
-    "J","Q","K"
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K"
 ];
 
 
@@ -30,57 +43,86 @@ function randomCard(){
 }
 
 
-function drawCardName(card){
 
-    if(!card || !card.suit || !card.value){
-        console.log("INVALID CARD:", card);
-        return "invalid";
-    }
+function drawCard(ctx, card, x, y){
 
-    return `${card.suit}${card.value}`;
+    ctx.fillStyle = "#ffffff";
 
-}
+    ctx.beginPath();
+    ctx.roundRect(
+        x,
+        y,
+        130,
+        180,
+        15
+    );
+    ctx.fill();
+
+
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 3;
+
+    ctx.stroke();
 
 
 
-async function loadCard(file){
+    ctx.fillStyle =
+        card.suit === "♥" || card.suit === "♦"
+        ? "#dc2626"
+        : "#111827";
 
-    const location = path.join(
-        process.cwd(),
-        "assets",
-        "blackjack",
-        file
+
+    ctx.font = "45px Arial";
+
+
+    ctx.fillText(
+        card.value,
+        x + 20,
+        y + 55
     );
 
 
-    if(!fs.existsSync(location)){
+    ctx.fillText(
+        card.suit,
+        x + 45,
+        y + 120
+    );
 
-        console.log("Missing card image:", location);
-
-        return null;
-    }
-
-
-    return await loadImage(location);
 
 }
 
 
 
-async function createBlackjackImage(player=[], dealer=[]){
 
 
-    const canvas = createCanvas(1200,700);
+async function createBlackjackImage(player,dealer){
 
-    const ctx = canvas.getContext("2d");
+
+    const canvas =
+        createCanvas(
+            1200,
+            700
+        );
+
+
+    const ctx =
+        canvas.getContext("2d");
+
 
 
     ctx.fillStyle="#111827";
-    ctx.fillRect(0,0,1200,700);
+
+    ctx.fillRect(
+        0,
+        0,
+        1200,
+        700
+    );
 
 
 
-    ctx.fillStyle="white";
+    ctx.fillStyle="#ffffff";
+
     ctx.font="40px Arial";
 
 
@@ -99,93 +141,79 @@ async function createBlackjackImage(player=[], dealer=[]){
 
 
 
-    let x=80;
-
+    let x = 80;
 
 
     for(let i=0;i<dealer.length;i++){
 
 
-        let filename;
-
-
         if(i===0){
 
-            filename="card-back.png";
+            ctx.fillStyle="#1e40af";
 
-        }
-        else{
+            ctx.beginPath();
 
-            filename=`${drawCardName(dealer[i])}.png`;
-
-        }
-
-
-
-        const img = await loadCard(filename);
-
-
-
-        if(img){
-
-            ctx.drawImage(
-                img,
+            ctx.roundRect(
                 x,
                 100,
                 130,
-                180
+                180,
+                15
+            );
+
+            ctx.fill();
+
+
+            ctx.fillStyle="#ffffff";
+
+            ctx.font="50px Arial";
+
+            ctx.fillText(
+                "?",
+                x+45,
+                210
+            );
+
+
+        }else{
+
+            drawCard(
+                ctx,
+                dealer[i],
+                x,
+                100
             );
 
         }
 
 
-
-        x+=150;
+        x += 150;
 
     }
 
 
 
 
-    x=80;
+    x = 80;
 
 
     for(const card of player){
 
 
-        const filename =
-            `${drawCardName(card)}.png`;
+        drawCard(
+            ctx,
+            card,
+            x,
+            400
+        );
 
 
-
-        const img =
-            await loadCard(filename);
-
-
-
-        if(img){
-
-            ctx.drawImage(
-                img,
-                x,
-                400,
-                130,
-                180
-            );
-
-        }
-
-
-        x+=150;
+        x += 150;
 
     }
 
 
-    console.log("DEBUG LINE 185");
-    console.log({
-        player,
-        dealer
-    });
+
     return canvas.toBuffer();
 
 }
@@ -194,124 +222,155 @@ async function createBlackjackImage(player=[], dealer=[]){
 
 
 
-module.exports={
 
 
-name:"blackjack",
-
-aliases:["bj"],
+module.exports = {
 
 
+    name:"blackjack",
 
-async execute(message,args){
-
-
-    const bet=Number(args[0]);
+    aliases:[
+        "bj"
+    ],
 
 
 
-    if(!bet || bet<=0){
-
-        return message.reply(
-            "❌ Enter a valid bet."
-        );
-
-    }
+    async execute(message,args){
 
 
 
-    const player=[
-        randomCard(),
-        randomCard()
-    ];
-
-
-    const dealer=[
-        randomCard(),
-        randomCard()
-    ];
+        const bet =
+            Number(args[0]);
 
 
 
-    console.log(
-        "PLAYER:",
-        player
-    );
+        if(
+            !bet ||
+            bet <= 0
+        ){
 
-    console.log(
-        "DEALER:",
-        dealer
-    );
-
-
-
-    const image =
-        await createBlackjackImage(
-            player,
-            dealer
-        );
-
-
-
-    const msg =
-    await message.reply({
-
-        content:
-        `🃏 **Blackjack**\nBet: **${bet} Points**`,
-
-
-        files:[
-            new AttachmentBuilder(
-                image,
-                {
-                    name:"blackjack.png"
-                }
-            )
-        ],
-
-
-        components:[
-
-            new ActionRowBuilder()
-            .addComponents(
-
-                new ButtonBuilder()
-                .setCustomId("bj_hit")
-                .setLabel("Hit")
-                .setStyle(ButtonStyle.Success),
-
-
-                new ButtonBuilder()
-                .setCustomId("bj_stand")
-                .setLabel("Stand")
-                .setStyle(ButtonStyle.Danger)
-
-            )
-
-        ]
-
-    });
-
-
-
-    blackjackGames.set(
-
-        msg.id,
-
-        {
-
-            userId:message.author.id,
-
-            bet,
-
-            player,
-
-            dealer
+            return message.reply(
+                "❌ Enter a valid bet."
+            );
 
         }
 
-    );
 
-}
+
+        const player=[
+
+            randomCard(),
+
+            randomCard()
+
+        ];
+
+
+
+        const dealer=[
+
+            randomCard(),
+
+            randomCard()
+
+        ];
+
+
+
+        const image =
+            await createBlackjackImage(
+                player,
+                dealer
+            );
+
+
+
+        const msg =
+        await message.reply({
+
+
+            content:
+
+            `🃏 **Blackjack**\nBet: **${bet} Points**`,
+
+
+
+            files:[
+
+                new AttachmentBuilder(
+                    image,
+                    {
+                        name:"blackjack.png"
+                    }
+                )
+
+            ],
+
+
+
+            components:[
+
+                new ActionRowBuilder()
+
+                .addComponents(
+
+                    new ButtonBuilder()
+
+                    .setCustomId(
+                        "bj_hit"
+                    )
+
+                    .setLabel(
+                        "Hit"
+                    )
+
+                    .setStyle(
+                        ButtonStyle.Success
+                    ),
+
+
+                    new ButtonBuilder()
+
+                    .setCustomId(
+                        "bj_stand"
+                    )
+
+                    .setLabel(
+                        "Stand"
+                    )
+
+                    .setStyle(
+                        ButtonStyle.Danger
+                    )
+
+                )
+
+            ]
+
+        });
+
+
+
+        blackjackGames.set(
+
+            msg.id,
+
+            {
+
+                userId:
+                message.author.id,
+
+                bet,
+
+                player,
+
+                dealer
+
+            }
+
+        );
+
+
+    }
 
 };
