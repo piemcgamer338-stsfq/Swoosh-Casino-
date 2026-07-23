@@ -1,14 +1,17 @@
+const { AttachmentBuilder } = require("discord.js");
 const userService = require("../../services/userService");
-const embed = require("../../utils/embed");
+const generateBalanceCard = require("../../utils/generateBalanceCard");
 
 module.exports = {
+
     name: "bal",
     aliases: ["balance", "b"],
 
     async execute(message) {
 
         const target =
-            message.mentions.users.first() || message.author;
+            message.mentions.users.first() ||
+            message.author;
 
         const user =
             await userService.getUser(target.id);
@@ -17,23 +20,24 @@ module.exports = {
             return message.reply("❌ User not found.");
         }
 
+        const image =
+            await generateBalanceCard(
+                target,
+                user
+            );
+
+        const attachment =
+            new AttachmentBuilder(
+                image,
+                {
+                    name: "balance.png"
+                }
+            );
+
         return message.reply({
-            embeds: [
-                embed.createEmbed(
-                    `${target.username}'s Balance`,
-                    [
-                        `💰 **Balance:** ${(Number(user.balance) || 0).toLocaleString()} Points`,
-                        `🏦 **Vault:** ${(Number(user.vault) || 0).toLocaleString()} Points`,
-                        ``,
-                        `📊 **Wagered:** ${(Number(user.wagered) || 0).toLocaleString()}`,
-                        `🏆 **Won:** ${(Number(user.won) || 0).toLocaleString()}`,
-                        `📉 **Lost:** ${(Number(user.lost) || 0).toLocaleString()}`,
-                        ``,
-                        `⭐ **Level:** ${Number(user.level) || 1}`,
-                        `✨ **XP:** ${Number(user.xp) || 0}`
-                    ].join("\n")
-                )
-            ]
+            files: [attachment]
         });
+
     }
+
 };
