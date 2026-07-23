@@ -72,6 +72,8 @@ async function generateBalanceCard(user, data) {
     );
 
 
+    console.log("BALANCE CARD GENERATED");
+    
     return canvas.toBuffer("image/png");
 }
 
