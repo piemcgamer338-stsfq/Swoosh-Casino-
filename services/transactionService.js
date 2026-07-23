@@ -1,25 +1,58 @@
 const db = require("../database/database");
 
-function addTransaction(discordId, type, amount) {
-    db.prepare(`
-        INSERT INTO transactions (
+
+async function addTransaction(
+    discordId,
+    type,
+    amount
+) {
+
+    const result = await db.query(
+        `
+        INSERT INTO transactions
+        (
             discord_id,
             type,
             amount
         )
-        VALUES (?, ?, ?)
-    `).run(discordId, type, amount);
+        VALUES
+        ($1,$2,$3)
+        RETURNING *
+        `,
+        [
+            discordId,
+            type,
+            amount
+        ]
+    );
+
+
+    return result.rows[0];
+
 }
 
-function getTransactions(discordId, limit = 10) {
-    return db.prepare(`
+
+
+async function getTransactions(discordId) {
+
+    const result = await db.query(
+        `
         SELECT *
         FROM transactions
-        WHERE discord_id = ?
-        ORDER BY id DESC
-        LIMIT ?
-    `).all(discordId, limit);
+        WHERE discord_id = $1
+        ORDER BY created_at DESC
+        `,
+        [
+            discordId
+        ]
+    );
+
+
+    return result.rows;
+
 }
+
+
 
 module.exports = {
     addTransaction,
