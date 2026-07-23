@@ -13,12 +13,8 @@ const path = require("path");
 async function createLimboImage(data){
 
 
-    const width = 1200;
-    const height = 630;
-
-
     const canvas =
-        createCanvas(width,height);
+        createCanvas(1200,630);
 
 
     const ctx =
@@ -26,115 +22,65 @@ async function createLimboImage(data){
 
 
 
-    // Load your background PNG
-
-    const bg =
-        await loadImage(
-            path.join(
-                __dirname,
-                "../assets/limbo.png"
-            )
+    const imagePath =
+        path.join(
+            process.cwd(),
+            "assets",
+            "limbo.png"
         );
+
+
+    console.log(
+        "Loading image:",
+        imagePath
+    );
+
+
+
+    const img =
+        await loadImage(imagePath);
+
 
 
     ctx.drawImage(
-        bg,
+        img,
         0,
         0,
-        width,
-        height
+        1200,
+        630
     );
 
 
 
-    // dark overlay
+    // TEST TEXT
 
-    ctx.fillStyle =
-        "rgba(0,0,0,0.55)";
+    ctx.fillStyle="#ffffff";
 
-
-    ctx.fillRect(
-        0,
-        0,
-        width,
-        height
-    );
-
-
-
-    ctx.fillStyle =
-        "#ffffff";
-
-
-    ctx.font =
-        "bold 55px Arial";
+    ctx.font="bold 60px Arial";
 
 
     ctx.fillText(
-        "🚀 LIMBO",
-        80,
-        100
-    );
-
-
-
-    ctx.font =
-        "bold 35px Arial";
-
-
-    ctx.fillText(
-        `💰 Bet: ${data.bet} Points`,
+        "CRASHED AT "+data.crash+"x",
         100,
-        210
+        120
+    );
+
+
+    ctx.font="bold 45px Arial";
+
+
+    ctx.fillText(
+        "BET: "+data.bet,
+        100,
+        200
     );
 
 
     ctx.fillText(
-        `🎯 Target: ${data.target}x`,
+        "TARGET: "+data.target+"x",
         100,
         270
     );
-
-
-    ctx.fillText(
-        `💥 Crashed at: ${data.crash}x`,
-        100,
-        340
-    );
-
-
-
-    ctx.font =
-        "bold 60px Arial";
-
-
-    if(data.win){
-
-        ctx.fillStyle =
-            "#00ff88";
-
-
-        ctx.fillText(
-            "🏆 YOU WON",
-            100,
-            450
-        );
-
-
-    }
-    else{
-
-        ctx.fillStyle =
-            "#ff3333";
-
-
-        ctx.fillText(
-            "💀 YOU LOST",
-            100,
-            450
-        );
-
-    }
 
 
 
