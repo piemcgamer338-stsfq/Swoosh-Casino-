@@ -13,7 +13,6 @@ async function createLimboImage(data){
     console.log("🔥 LIMBO RENDERER RUNNING");
 
 
-
     const canvas =
         createCanvas(1200,630);
 
@@ -23,9 +22,9 @@ async function createLimboImage(data){
 
 
 
-    // RED TEST BACKGROUND
+    // Background
 
-    ctx.fillStyle = "red";
+    ctx.fillStyle = "#050505";
 
     ctx.fillRect(
         0,
@@ -36,43 +35,101 @@ async function createLimboImage(data){
 
 
 
-    ctx.fillStyle="white";
+    // Title
 
-    ctx.font="bold 80px Arial";
+    ctx.fillStyle = "#ffffff";
+
+    ctx.font =
+        "bold 70px Arial";
 
 
     ctx.fillText(
-        "CRASHED AT "+data.crash+"x",
-        100,
-        200
+        "🚀 LIMBO",
+        80,
+        100
     );
 
 
-    ctx.font="bold 50px Arial";
+
+    ctx.font =
+        "bold 45px Arial";
 
 
     ctx.fillText(
-        "BET "+data.bet,
+        `💰 Bet: ${data.bet} Points`,
+        100,
+        230
+    );
+
+
+    ctx.fillText(
+        `🎯 Target: ${data.target}x`,
         100,
         300
     );
 
 
+    ctx.fillText(
+        `💥 Crashed at: ${data.crash}x`,
+        100,
+        370
+    );
+
+
+
+
+    ctx.font =
+        "bold 65px Arial";
+
+
+
+    if(data.win){
+
+
+        ctx.fillStyle =
+            "#00ff88";
+
+
+        ctx.fillText(
+            "🏆 YOU WON",
+            100,
+            500
+        );
+
+
+    } else {
+
+
+        ctx.fillStyle =
+            "#ff3333";
+
+
+        ctx.fillText(
+            "💀 YOU LOST",
+            100,
+            500
+        );
+
+    }
+
+
+
+
     return new AttachmentBuilder(
 
-        canvas.toBuffer("png"),
+        canvas.toBuffer("image/png"),
 
         {
             name:
-            "NEW-limbo-result.png"
+            "limbo-result.png"
         }
 
     );
 
-
 }
 
 
-module.exports={
+
+module.exports = {
     createLimboImage
 };
