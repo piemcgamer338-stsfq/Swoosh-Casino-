@@ -1,7 +1,9 @@
 const {
+    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    AttachmentBuilder
 } = require("discord.js");
 
 const blackjackGames = require("../../games/blackjackManager");
@@ -9,12 +11,7 @@ const blackjackGames = require("../../games/blackjackManager");
 
 function randomCard() {
 
-    const suits = [
-        "♣",
-        "♦",
-        "♥",
-        "♠"
-    ];
+    const suits = ["♣", "♦", "♥", "♠"];
 
     const values = [
         "A",
@@ -32,51 +29,33 @@ function randomCard() {
         "K"
     ];
 
-
     return {
         value: values[Math.floor(Math.random() * values.length)],
         suit: suits[Math.floor(Math.random() * suits.length)]
     };
-
 }
 
 
-
-function showCards(cards) {
-
-    if (!Array.isArray(cards)) return "";
-
-    return cards
-        .map(c => `${c.value}${c.suit}`)
-        .join("  ");
-
+function cardName(card) {
+    return `${card.value}${card.suit}`;
 }
-
 
 
 module.exports = {
 
     name: "blackjack",
 
-    aliases: [
-        "bj"
-    ],
+    aliases: ["bj"],
 
 
-    async execute(message, args) {
-
+    async execute(message,args){
 
         const bet = Number(args[0]);
 
 
-        if (!bet || bet <= 0) {
-
-            return message.reply(
-                "❌ Enter a valid bet."
-            );
-
+        if(!bet || bet <= 0){
+            return message.reply("❌ Enter a valid bet.");
         }
-
 
 
         const player = [
@@ -92,23 +71,64 @@ module.exports = {
 
 
 
+        const attachment = new AttachmentBuilder(
+            "./assets/blackjack/table.png",
+            {
+                name:"blackjack-table.png"
+            }
+        );
+
+
+        const embed = new EmbedBuilder()
+
+        .setColor("#00b894")
+
+        .setTitle("🃏 Blackjack")
+
+        .setDescription(
+`
+**💰 Bet:** ${bet} Points
+
+
+**🎩 Dealer Cards**
+\`\`\`
+${cardName(dealer[0])}  ${cardName(dealer[1])}
+\`\`\`
+
+
+**👤 Your Cards**
+\`\`\`
+${cardName(player[0])}  ${cardName(player[1])}
+\`\`\`
+
+
+Choose your move:
+`
+)
+
+        .setImage("attachment://blackjack-table.png")
+
+        .setFooter({
+            text:"Swoosh Bet Blackjack"
+        });
+
+
+
         const msg = await message.reply({
 
-            content:
-`🃏 **Blackjack**
+            embeds:[
+                embed
+            ],
 
-💰 Bet: **${bet} Points**
+            files:[
+                attachment
+            ],
 
-🎩 Dealer:
-\`${showCards(dealer)}\`
 
-👤 Player:
-\`${showCards(player)}\`
-`,
-
-            components: [
+            components:[
 
                 new ActionRowBuilder()
+
                 .addComponents(
 
                     new ButtonBuilder()
@@ -136,9 +156,9 @@ module.exports = {
 
             {
                 userId: message.author.id,
-                bet: bet,
-                player: player,
-                dealer: dealer
+                bet,
+                player,
+                dealer
             }
 
         );
