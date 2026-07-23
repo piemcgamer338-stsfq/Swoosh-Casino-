@@ -6,9 +6,9 @@ async function generateBalanceCard(user, data) {
     const canvas = createCanvas(1600, 900);
     const ctx = canvas.getContext("2d");
 
-    const bg = await loadImage(
-        path.join(__dirname, "../assets/cards/balance.png")
-    );
+   const bg = await loadImage(
+    `${process.cwd()}/assets/cards/balance.png`
+);
 
     ctx.drawImage(bg, 0, 0, 1600, 900);
 
