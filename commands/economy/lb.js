@@ -8,12 +8,14 @@ module.exports = {
 
     async execute(message) {
 
-        const users = db.prepare(`
+        const result = await db.query(`
             SELECT discord_id, balance
             FROM users
             ORDER BY balance DESC
             LIMIT 10
-        `).all();
+        `);
+
+        const users = result.rows;
 
         let description = "";
 
@@ -22,20 +24,31 @@ module.exports = {
             let username = "Unknown";
 
             try {
-                const user = await message.client.users.fetch(users[i].discord_id);
+                const user = await message.client.users.fetch(
+                    users[i].discord_id
+                );
+
                 username = user.username;
+
             } catch {}
 
-            description += `**${i + 1}.** ${username} — ${format.formatUSD(users[i].balance)}\n`;
+
+            description +=
+                `**${i + 1}.** ${username} — ${format.formatUSD(users[i].balance)}\n`;
         }
 
+
         return message.reply({
+
             embeds: [
+
                 embed.createEmbed(
                     "💰 Richest Players",
                     description || "Nobody yet."
                 )
+
             ]
+
         });
 
     }
