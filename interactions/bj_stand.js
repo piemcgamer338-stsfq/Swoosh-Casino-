@@ -9,7 +9,9 @@ const {
     gameEmbed
 } = require("../utils/blackjackRenderer");
 
-const balanceService = require("../services/balanceService");
+const {
+    addBalance
+} = require("../services/balanceService");
 
 
 module.exports = {
@@ -42,7 +44,7 @@ module.exports = {
         ) {
 
             return interaction.reply({
-                content: "❌ This is not your game.",
+                content: "❌ This isn't your game.",
                 ephemeral: true
             });
 
@@ -66,7 +68,9 @@ module.exports = {
         );
 
 
+
         game.finished = true;
+
 
 
         const result =
@@ -83,36 +87,38 @@ module.exports = {
 
         if (result === "win") {
 
+
             const payout =
                 game.bet * 2;
 
 
-            await balanceService.addBalance(
+
+            await addBalance(
+
                 game.userId,
+
                 payout,
+
                 "blackjack_win"
+
             );
 
 
+
             text =
-            `🎉 **You Win!**\n💰 Won: **${payout} Points**`;
+            `🎉 **You Won!**\n💰 Payout: **${payout} Points**`;
+
 
         }
 
 
 
-        else if (result === "push") {
-
-
-            await balanceService.addBalance(
-                game.userId,
-                game.bet,
-                "blackjack_push"
-            );
+        else if (result === "lose") {
 
 
             text =
-            `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
+            `💀 **Dealer Wins!**\n💸 Lost: **${game.bet} Points**`;
+
 
         }
 
@@ -120,15 +126,31 @@ module.exports = {
 
         else {
 
+
+            await addBalance(
+
+                game.userId,
+
+                game.bet,
+
+                "blackjack_push"
+
+            );
+
+
+
             text =
-            "💀 **Dealer Wins!**";
+            `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
+
 
         }
 
 
 
         blackjackGames.delete(
+
             interaction.message.id
+
         );
 
 
@@ -137,10 +159,15 @@ module.exports = {
 
             content: text,
 
+
             ...gameEmbed(
+
                 game,
+
                 true
+
             ),
+
 
             components: []
 
