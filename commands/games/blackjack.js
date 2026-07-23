@@ -197,35 +197,29 @@ async function createBlackjackImage(player,dealer){
     x = 80;
 
 
-    for(const card of player){
+       x = 80;
 
+    for (const card of player) {
+
+        if (!card || !card.suit || !card.value) {
+            continue;
+        }
 
         drawCard(
             ctx,
-            card,
+            {
+                suit: String(card.suit),
+                value: String(card.value)
+            },
             x,
             400
         );
 
-
         x += 150;
-
     }
 
 
-
     return canvas.toBuffer();
-
-}
-
-
-
-
-
-
-
-module.exports = {
-
 
     name:"blackjack",
 
