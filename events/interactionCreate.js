@@ -5,7 +5,10 @@ module.exports = {
     async execute(interaction, client) {
 
 
-        if (!interaction.isButton() && !interaction.isStringSelectMenu()) {
+        if (
+            !interaction.isButton() &&
+            !interaction.isStringSelectMenu()
+        ) {
             return;
         }
 
@@ -13,7 +16,7 @@ module.exports = {
         try {
 
 
-            // Mines buttons
+            // Let mines handle its own buttons
             if (
                 interaction.customId.startsWith("mine_") ||
                 interaction.customId === "cashout"
@@ -24,6 +27,7 @@ module.exports = {
 
 
             if (!client.interactions) {
+                console.log("No interaction map loaded");
                 return;
             }
 
@@ -37,6 +41,12 @@ module.exports = {
 
 
             if (!handler) {
+
+                console.log(
+                    "No handler for:",
+                    interaction.customId
+                );
+
                 return;
             }
 
@@ -58,39 +68,34 @@ module.exports = {
             );
 
 
+            try {
 
-            if (
-                interaction.replied ||
-                interaction.deferred
-            ) {
+                if (
+                    interaction.replied ||
+                    interaction.deferred
+                ) {
 
-                await interaction.followUp({
-
-                    content:
-                    "❌ Something went wrong.",
-
-                    ephemeral:true
-
-                }).catch(()=>{});
+                    await interaction.followUp({
+                        content:
+                        "❌ Something went wrong.",
+                        ephemeral:true
+                    });
 
 
-            } else {
+                } else {
 
 
-                await interaction.reply({
+                    await interaction.reply({
+                        content:
+                        "❌ Something went wrong.",
+                        ephemeral:true
+                    });
 
-                    content:
-                    "❌ Something went wrong.",
+                }
 
-                    ephemeral:true
-
-                }).catch(()=>{});
-
-            }
-
+            } catch {}
 
         }
-
 
     }
 
