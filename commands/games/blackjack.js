@@ -6,111 +6,118 @@ const {
 } = require("discord.js");
 
 const blackjackGames = require("../../games/blackjackManager");
-const { createCanvas } = require("@napi-rs/canvas");
+const { createCanvas, loadImage } = require("@napi-rs/canvas");
+
+const fs = require("fs");
+const path = require("path");
 
 
-const suits = [
-    "♠",
-    "♥",
-    "♦",
-    "♣"
-];
-
-const values = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K"
-];
+const CARD_PATH = path.join(
+    process.cwd(),
+    "assets",
+    "blackjack"
+);
 
 
-function randomCard(){
+function randomCard() {
+
+    const suits = [
+        "C",
+        "D",
+        "H",
+        "S"
+    ];
+
+    const values = [
+        "A",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "J",
+        "Q",
+        "K"
+    ];
+
 
     return {
-        suit: suits[Math.floor(Math.random()*suits.length)],
-        value: values[Math.floor(Math.random()*values.length)]
+        suit: suits[Math.floor(Math.random() * suits.length)],
+        value: values[Math.floor(Math.random() * values.length)]
     };
 
 }
 
 
 
-function drawCard(ctx, card, x, y){
+function cardFile(card) {
 
-    ctx.fillStyle = "#ffffff";
+    if (
+        !card ||
+        !card.suit ||
+        !card.value
+    ) {
+        return null;
+    }
 
-    ctx.beginPath();
-    ctx.roundRect(
+
+    return `${card.suit}${card.value}.png`;
+
+}
+
+
+
+async function drawCard(ctx, card, x, y) {
+
+    const file = cardFile(card);
+
+
+    if (!file)
+        return;
+
+
+    const fullPath = path.join(
+        CARD_PATH,
+        file
+    );
+
+
+    if (!fs.existsSync(fullPath))
+        return;
+
+
+    const img = await loadImage(fullPath);
+
+
+    ctx.drawImage(
+        img,
         x,
         y,
         130,
-        180,
-        15
+        180
     );
-    ctx.fill();
-
-
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 3;
-
-    ctx.stroke();
-
-
-
-    ctx.fillStyle =
-        card.suit === "♥" || card.suit === "♦"
-        ? "#dc2626"
-        : "#111827";
-
-
-    ctx.font = "45px Arial";
-
-
-    ctx.fillText(
-        card.value,
-        x + 20,
-        y + 55
-    );
-
-
-    ctx.fillText(
-        card.suit,
-        x + 45,
-        y + 120
-    );
-
 
 }
 
 
 
 
+async function createBlackjackImage(player, dealer) {
 
-async function createBlackjackImage(player,dealer){
-
-
-    const canvas =
-        createCanvas(
-            1200,
-            700
-        );
+    const canvas = createCanvas(
+        1200,
+        700
+    );
 
 
-    const ctx =
-        canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
 
-
-    ctx.fillStyle="#111827";
+    ctx.fillStyle = "#111827";
 
     ctx.fillRect(
         0,
@@ -120,10 +127,9 @@ async function createBlackjackImage(player,dealer){
     );
 
 
+    ctx.fillStyle = "#ffffff";
 
-    ctx.fillStyle="#ffffff";
-
-    ctx.font="40px Arial";
+    ctx.font = "40px Arial";
 
 
     ctx.fillText(
@@ -144,40 +150,43 @@ async function createBlackjackImage(player,dealer){
     let x = 80;
 
 
-    for(let i=0;i<dealer.length;i++){
+    // Dealer cards
+
+    for(
+        let i = 0;
+        i < dealer.length;
+        i++
+    ){
+
+        if(i === 0){
+
+            const back =
+                path.join(
+                    CARD_PATH,
+                    "card-back.png"
+                );
 
 
-        if(i===0){
+            if(fs.existsSync(back)){
 
-            ctx.fillStyle="#1e40af";
-
-            ctx.beginPath();
-
-            ctx.roundRect(
-                x,
-                100,
-                130,
-                180,
-                15
-            );
-
-            ctx.fill();
+                const img =
+                    await loadImage(back);
 
 
-            ctx.fillStyle="#ffffff";
+                ctx.drawImage(
+                    img,
+                    x,
+                    100,
+                    130,
+                    180
+                );
 
-            ctx.font="50px Arial";
+            }
 
-            ctx.fillText(
-                "?",
-                x+45,
-                210
-            );
+        }
+        else {
 
-
-        }else{
-
-            drawCard(
+            await drawCard(
                 ctx,
                 dealer[i],
                 x,
@@ -193,44 +202,45 @@ async function createBlackjackImage(player,dealer){
 
 
 
-
     x = 80;
 
 
-       x = 80;
+    // Player cards
 
-    for (const card of player) {
+    for(const card of player){
 
-        if (!card || !card.suit || !card.value) {
-            continue;
-        }
-
-        drawCard(
+        await drawCard(
             ctx,
-            {
-                suit: String(card.suit),
-                value: String(card.value)
-            },
+            card,
             x,
             400
         );
 
+
         x += 150;
+
     }
+
 
 
     return canvas.toBuffer();
 
-    name:"blackjack",
+}
 
-    aliases:[
+
+
+
+
+module.exports = {
+
+    name: "blackjack",
+
+    aliases: [
         "bj"
     ],
 
 
-
     async execute(message,args){
-
 
 
         const bet =
@@ -251,20 +261,18 @@ async function createBlackjackImage(player,dealer){
 
 
 
-        const player=[
+        const player = [
 
             randomCard(),
-
             randomCard()
 
         ];
 
 
 
-        const dealer=[
+        const dealer = [
 
             randomCard(),
-
             randomCard()
 
         ];
@@ -280,68 +288,57 @@ async function createBlackjackImage(player,dealer){
 
 
         const msg =
-        await message.reply({
+            await message.reply({
 
+                content:
+                `🃏 **Blackjack**\nBet: **${bet} Points**`,
 
-            content:
+                files:[
 
-            `🃏 **Blackjack**\nBet: **${bet} Points**`,
-
-
-
-            files:[
-
-                new AttachmentBuilder(
-                    image,
-                    {
-                        name:"blackjack.png"
-                    }
-                )
-
-            ],
-
-
-
-            components:[
-
-                new ActionRowBuilder()
-
-                .addComponents(
-
-                    new ButtonBuilder()
-
-                    .setCustomId(
-                        "bj_hit"
+                    new AttachmentBuilder(
+                        image,
+                        {
+                            name:
+                            "blackjack.png"
+                        }
                     )
 
-                    .setLabel(
-                        "Hit"
+                ],
+
+
+                components:[
+
+                    new ActionRowBuilder()
+                    .addComponents(
+
+                        new ButtonBuilder()
+                        .setCustomId(
+                            "bj_hit"
+                        )
+                        .setLabel(
+                            "Hit"
+                        )
+                        .setStyle(
+                            ButtonStyle.Success
+                        ),
+
+
+                        new ButtonBuilder()
+                        .setCustomId(
+                            "bj_stand"
+                        )
+                        .setLabel(
+                            "Stand"
+                        )
+                        .setStyle(
+                            ButtonStyle.Danger
+                        )
+
                     )
 
-                    .setStyle(
-                        ButtonStyle.Success
-                    ),
+                ]
 
-
-                    new ButtonBuilder()
-
-                    .setCustomId(
-                        "bj_stand"
-                    )
-
-                    .setLabel(
-                        "Stand"
-                    )
-
-                    .setStyle(
-                        ButtonStyle.Danger
-                    )
-
-                )
-
-            ]
-
-        });
+            });
 
 
 
