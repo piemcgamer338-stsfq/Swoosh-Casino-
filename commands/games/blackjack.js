@@ -1,17 +1,20 @@
 const {
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder
+    ButtonStyle
 } = require("discord.js");
 
 const blackjackGames = require("../../games/blackjackManager");
-const { createCanvas } = require("@napi-rs/canvas");
 
 
 function randomCard() {
 
-    const suits = ["C", "D", "H", "S"];
+    const suits = [
+        "♣",
+        "♦",
+        "♥",
+        "♠"
+    ];
 
     const values = [
         "A",
@@ -29,76 +32,23 @@ function randomCard() {
         "K"
     ];
 
+
     return {
-        suit: suits[Math.floor(Math.random() * suits.length)],
-        value: values[Math.floor(Math.random() * values.length)]
+        value: values[Math.floor(Math.random() * values.length)],
+        suit: suits[Math.floor(Math.random() * suits.length)]
     };
 
 }
 
 
 
-function formatCard(card) {
+function showCards(cards) {
 
-    if (!card) return "?";
+    if (!Array.isArray(cards)) return "";
 
-    return `${card.value || "?"}${card.suit || ""}`;
-
-}
-
-
-
-function createBlackjackImage(player, dealer) {
-
-    const canvas = createCanvas(1200, 700);
-    const ctx = canvas.getContext("2d");
-
-
-    ctx.fillStyle = "#0b1220";
-    ctx.fillRect(0, 0, 1200, 700);
-
-
-    ctx.fillStyle = "#ffffff";
-
-
-    ctx.font = "50px Arial";
-    ctx.fillText("BLACKJACK", 60, 80);
-
-
-    ctx.font = "35px Arial";
-
-    ctx.fillText("Dealer", 60, 180);
-    ctx.fillText("Player", 60, 430);
-
-
-    ctx.font = "45px Arial";
-
-
-    const dealerCards = dealer
-        .map(formatCard)
+    return cards
+        .map(c => `${c.value}${c.suit}`)
         .join("  ");
-
-
-    const playerCards = player
-        .map(formatCard)
-        .join("  ");
-
-
-    ctx.fillText(
-        String(dealerCards),
-        80,
-        260
-    );
-
-
-    ctx.fillText(
-        String(playerCards),
-        80,
-        510
-    );
-
-
-    return canvas.toBuffer();
 
 }
 
@@ -108,7 +58,9 @@ module.exports = {
 
     name: "blackjack",
 
-    aliases: ["bj"],
+    aliases: [
+        "bj"
+    ],
 
 
     async execute(message, args) {
@@ -120,7 +72,7 @@ module.exports = {
         if (!bet || bet <= 0) {
 
             return message.reply(
-                "Enter a valid bet."
+                "❌ Enter a valid bet."
             );
 
         }
@@ -140,28 +92,19 @@ module.exports = {
 
 
 
-        const image = createBlackjackImage(
-            player,
-            dealer
-        );
-
-
-
         const msg = await message.reply({
 
             content:
-            `Blackjack\nBet: **${bet} Points**`,
+`🃏 **Blackjack**
 
+💰 Bet: **${bet} Points**
 
-            files: [
-                new AttachmentBuilder(
-                    image,
-                    {
-                        name: "blackjack.png"
-                    }
-                )
-            ],
+🎩 Dealer:
+\`${showCards(dealer)}\`
 
+👤 Player:
+\`${showCards(player)}\`
+`,
 
             components: [
 
@@ -193,9 +136,9 @@ module.exports = {
 
             {
                 userId: message.author.id,
-                bet,
-                player,
-                dealer
+                bet: bet,
+                player: player,
+                dealer: dealer
             }
 
         );
