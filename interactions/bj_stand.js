@@ -1,5 +1,4 @@
 const blackjackGames = require("../games/blackjackManager");
-const balanceService = require("../services/balanceService");
 
 const {
     dealerPlay,
@@ -10,60 +9,100 @@ const {
     gameEmbed
 } = require("../utils/blackjackRenderer");
 
+const balanceService = require("../services/balanceService");
+
+
 module.exports = {
 
     customId: "bj_stand",
 
+
     async execute(interaction) {
 
-        const game = blackjackGames.get(
-            interaction.message.id
-        );
 
-        if (!game)
+        const game =
+            blackjackGames.get(
+                interaction.message.id
+            );
+
+
+        if (!game) {
+
             return interaction.reply({
                 content: "❌ Game not found.",
                 ephemeral: true
             });
 
-        if (interaction.user.id !== game.userId)
+        }
+
+
+
+        if (
+            interaction.user.id !== game.userId
+        ) {
+
             return interaction.reply({
-                content: "❌ This isn't your game.",
+                content: "❌ This is not your game.",
                 ephemeral: true
             });
 
-        if (game.finished)
+        }
+
+
+
+        if (game.finished) {
+
             return interaction.reply({
                 content: "❌ Game already finished.",
                 ephemeral: true
             });
 
-        dealerPlay(game.dealer);
+        }
 
-        game.finished = true;
 
-        const result = getResult(
-            game.player,
+
+        dealerPlay(
             game.dealer
         );
 
+
+        game.finished = true;
+
+
+        const result =
+            getResult(
+                game.player,
+                game.dealer
+            );
+
+
+
         let text = "";
+
+
 
         if (result === "win") {
 
-            text = "🎉 **You Win!**";
+            const payout =
+                game.bet * 2;
+
 
             await balanceService.addBalance(
                 game.userId,
-                game.bet * 2,
+                payout,
                 "blackjack_win"
             );
 
+
+            text =
+            `🎉 **You Win!**\n💰 Won: **${payout} Points**`;
+
         }
+
+
 
         else if (result === "push") {
 
-            text = "🤝 **Push!**";
 
             await balanceService.addBalance(
                 game.userId,
@@ -71,17 +110,28 @@ module.exports = {
                 "blackjack_push"
             );
 
+
+            text =
+            `🤝 **Push!**\n💰 Refund: **${game.bet} Points**`;
+
         }
+
+
 
         else {
 
-            text = "💀 **Dealer Wins!**";
+            text =
+            "💀 **Dealer Wins!**";
 
         }
+
+
 
         blackjackGames.delete(
             interaction.message.id
         );
+
+
 
         return interaction.update({
 
@@ -95,6 +145,7 @@ module.exports = {
             components: []
 
         });
+
 
     }
 
