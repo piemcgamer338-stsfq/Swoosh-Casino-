@@ -1,15 +1,18 @@
 const {
-    EmbedBuilder,
-    AttachmentBuilder
+    EmbedBuilder
 } = require("discord.js");
 
-const path = require("path");
 
 const {
     hasBalance,
     removeBalance,
     addBalance
 } = require("../../services/balanceService");
+
+
+const {
+    createLimboImage
+} = require("../../utils/limboRenderer");
 
 
 
@@ -24,8 +27,13 @@ module.exports = {
     async execute(message, args) {
 
 
-        const bet = Number(args[0]);
-        const target = Number(args[1]);
+
+        const bet =
+            Number(args[0]);
+
+
+        const target =
+            Number(args[1]);
 
 
 
@@ -33,8 +41,7 @@ module.exports = {
             !bet ||
             bet <= 0 ||
             !target ||
-            target < 1.1 ||
-            target > 100
+            target < 1.1
         ) {
 
             return message.reply(
@@ -42,6 +49,19 @@ module.exports = {
             );
 
         }
+
+
+
+        // max payout multiplier
+
+        if(target > 5){
+
+            return message.reply(
+                "❌ Maximum multiplier is **5x**."
+            );
+
+        }
+
 
 
 
@@ -53,13 +73,14 @@ module.exports = {
 
 
 
-        if (!balance) {
+        if(!balance){
 
             return message.reply(
                 "❌ You don't have enough balance."
             );
 
         }
+
 
 
 
@@ -71,23 +92,12 @@ module.exports = {
 
 
 
-        const image =
-            new AttachmentBuilder(
-                path.join(
-                    __dirname,
-                    "../../assets/limbo.png"
-                ),
-                {
-                    name: "limbo.png"
-                }
-            );
-
 
 
         const loading =
-            await message.reply({
-
-                embeds: [
+            await message.reply(
+            {
+                embeds:[
 
                     new EmbedBuilder()
 
@@ -97,93 +107,65 @@ module.exports = {
 
                     .setDescription(
 `
-💰 **Bet**
-${bet} Points
+💰 Bet:
+**${bet} Points**
 
-🎯 **Target**
-${target.toFixed(2)}x
+🎯 Target:
+**${target.toFixed(2)}x**
 
 🚀 Rocket launching...
 
-⏳ Please wait...
+⏳ Waiting...
 `
                     )
 
-                    .setImage(
-                        "attachment://limbo.png"
-                    )
-
-                ],
-
-                files: [image]
-
+                ]
             });
 
 
 
-        // Casino delay
+
+        // casino delay
 
         await new Promise(
-            resolve => setTimeout(resolve, 3000)
+            r => setTimeout(r,3000)
         );
 
 
 
-        // Generate crash multiplier
-
-        let crash =
-            Math.random() * 100;
 
 
+        let crash;
 
-        crash =
-            Math.max(
-                1.00,
+
+
+        /*
+            Low target trap
+
+            Example:
+            1.5x / 1.8x
+
+            50% chance crash early
+        */
+
+
+        if(
+            target < 2 &&
+            Math.random() < 0.5
+        ){
+
+
+            crash =
                 Number(
-                    crash.toFixed(2)
-                )
-            );
-
-
-
-        let result = "";
-        let color = "#e74c3c";
-
-
-
-        if (crash >= target) {
-
-
-            const payout =
-                Math.floor(
-                    bet * target
+                    (
+                        Math.random()
+                        *
+                        1.8
+                        +
+                        1
+                    )
+                    .toFixed(2)
                 );
-
-
-
-            await addBalance(
-                message.author.id,
-                payout,
-                "limbo_win"
-            );
-
-
-
-            color = "#2ecc71";
-
-
-
-            result =
-`
-🏆 **YOU WON!**
-
-🚀 Rocket reached:
-**${crash}x**
-
-💰 Payout:
-**${payout} Points**
-`;
-
 
 
         }
@@ -191,19 +173,82 @@ ${target.toFixed(2)}x
         else {
 
 
+            crash =
+                Number(
+                    (
+                        Math.random()
+                        *
+                        100
+                        +
+                        1
+                    )
+                    .toFixed(2)
+                );
 
-            result =
-`
-💥 **ROCKET CRASHED!**
-
-🚀 Crash point:
-**${crash}x**
-
-💀 You Lost:
-**${bet} Points**
-`;
 
         }
+
+
+
+
+        let win = false;
+
+
+
+        if(crash >= target){
+
+            win = true;
+
+        }
+
+
+
+
+        let payout = 0;
+
+
+
+        if(win){
+
+
+            payout =
+                Math.floor(
+                    bet * target
+                );
+
+
+            await addBalance(
+
+                message.author.id,
+
+                payout,
+
+                "limbo_win"
+
+            );
+
+        }
+
+
+
+
+
+        const image =
+            await createLimboImage({
+
+                bet,
+
+                target:
+                    target.toFixed(2),
+
+                crash:
+                    crash.toFixed(2),
+
+                win,
+
+                payout
+
+            });
 
 
 
@@ -212,37 +257,50 @@ ${target.toFixed(2)}x
         const embed =
             new EmbedBuilder()
 
-            .setColor(color)
+            .setColor(
+                win
+                ?
+                "#2ecc71"
+                :
+                "#e74c3c"
+            )
 
-            .setTitle("🚀 Limbo")
+            .setTitle(
+                "🚀 Limbo Result"
+            )
 
             .setDescription(
+                win
+                ?
 `
-💰 **Bet**
-${bet} Points
+🏆 **You Won!**
 
-🎯 **Target**
-${target.toFixed(2)}x
+💰 Payout:
+**${payout} Points**
+`
+                :
+`
+💀 **You Lost!**
 
-${result}
+Better luck next time.
 `
             )
 
             .setImage(
-                "attachment://limbo.png"
-            )
+                "attachment://limbo-result.png"
+            );
 
-            .setTimestamp();
+
 
 
 
         return loading.edit({
 
-            embeds: [
+            embeds:[
                 embed
             ],
 
-            files: [
+            files:[
                 image
             ]
 
