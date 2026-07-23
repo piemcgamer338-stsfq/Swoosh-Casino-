@@ -1,64 +1,56 @@
-const { createCanvas } = require("@napi-rs/canvas");
-const { AttachmentBuilder } = require("discord.js");
-const fs = require("fs");
+const {
+    createCanvas,
+    loadImage
+} = require("@napi-rs/canvas");
+
+const {
+    AttachmentBuilder
+} = require("discord.js");
+
 const path = require("path");
 
 
-async function createLimboImage(data) {
+async function createLimboImage(data){
 
 
     const width = 1200;
-    const height = 600;
+    const height = 630;
 
 
-    const canvas = createCanvas(
-        width,
-        height
-    );
+    const canvas =
+        createCanvas(width,height);
 
 
-    const ctx = canvas.getContext("2d");
-
-
-
-    // Background
-
-    ctx.fillStyle = "#050816";
-
-    ctx.fillRect(
-        0,
-        0,
-        width,
-        height
-    );
+    const ctx =
+        canvas.getContext("2d");
 
 
 
-    // Glow
+    // Load your background PNG
 
-    const gradient =
-        ctx.createRadialGradient(
-            600,
-            250,
-            20,
-            600,
-            250,
-            500
+    const bg =
+        await loadImage(
+            path.join(
+                __dirname,
+                "../assets/limbo.png"
+            )
         );
 
 
-    gradient.addColorStop(
+    ctx.drawImage(
+        bg,
         0,
-        "#ff9d00"
-    );
-
-    gradient.addColorStop(
-        1,
-        "#050816"
+        0,
+        width,
+        height
     );
 
 
-    ctx.fillStyle = gradient;
+
+    // dark overlay
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.55)";
 
 
     ctx.fillRect(
@@ -69,22 +61,6 @@ async function createLimboImage(data) {
     );
 
 
-
-    // Rocket
-
-    ctx.font =
-        "120px Arial";
-
-
-    ctx.fillText(
-        "🚀",
-        540,
-        250
-    );
-
-
-
-    // Title
 
     ctx.fillStyle =
         "#ffffff";
@@ -96,59 +72,33 @@ async function createLimboImage(data) {
 
     ctx.fillText(
         "🚀 LIMBO",
-        70,
-        90
+        80,
+        100
     );
 
-
-
-    // Info box
-
-    ctx.fillStyle =
-        "rgba(0,0,0,0.45)";
-
-
-    ctx.roundRect(
-        60,
-        130,
-        1080,
-        350,
-        25
-    );
-
-
-    ctx.fill();
-
-
-
-    ctx.fillStyle =
-        "#ffffff";
 
 
     ctx.font =
         "bold 35px Arial";
 
 
-
     ctx.fillText(
         `💰 Bet: ${data.bet} Points`,
-        120,
-        220
+        100,
+        210
     );
-
 
 
     ctx.fillText(
         `🎯 Target: ${data.target}x`,
-        120,
-        280
+        100,
+        270
     );
-
 
 
     ctx.fillText(
         `💥 Crashed at: ${data.crash}x`,
-        120,
+        100,
         340
     );
 
@@ -158,43 +108,30 @@ async function createLimboImage(data) {
         "bold 60px Arial";
 
 
-
     if(data.win){
 
-
         ctx.fillStyle =
-            "#2ecc71";
+            "#00ff88";
 
 
         ctx.fillText(
-            "🏆 YOU WON!",
-            120,
-            430
+            "🏆 YOU WON",
+            100,
+            450
         );
 
 
-        ctx.font =
-            "bold 35px Arial";
-
-
-        ctx.fillText(
-            `Payout: ${data.payout} Points`,
-            600,
-            430
-        );
-
-
-    } else {
-
+    }
+    else{
 
         ctx.fillStyle =
-            "#e74c3c";
+            "#ff3333";
 
 
         ctx.fillText(
             "💀 YOU LOST",
-            120,
-            430
+            100,
+            450
         );
 
     }
@@ -215,6 +152,6 @@ async function createLimboImage(data) {
 
 
 
-module.exports = {
+module.exports={
     createLimboImage
 };
