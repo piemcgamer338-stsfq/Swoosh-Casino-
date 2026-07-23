@@ -1,5 +1,6 @@
 const {
-    createCanvas
+    createCanvas,
+    GlobalFonts
 } = require("@napi-rs/canvas");
 
 const {
@@ -7,22 +8,24 @@ const {
 } = require("discord.js");
 
 
+// Register default font
+GlobalFonts.registerFromPath(
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "DejaVu"
+);
+
+
 async function createLimboImage(data) {
 
 
-    console.log("🔥 LIMBO IMAGE CREATED");
-
-
     const canvas =
-        createCanvas(1200, 630);
+        createCanvas(1200,630);
 
 
     const ctx =
         canvas.getContext("2d");
 
 
-
-    // background
 
     ctx.fillStyle = "#111111";
 
@@ -35,26 +38,10 @@ async function createLimboImage(data) {
 
 
 
-    // BIG BOX TEST
-
-    ctx.fillStyle = "#ff0000";
-
-    ctx.fillRect(
-        50,
-        50,
-        1100,
-        150
-    );
-
-
-
-    // TEXT
-
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#00ff88";
 
     ctx.font =
-        "bold 70px Arial";
-
+        "bold 80px DejaVu";
 
     ctx.fillText(
         "LIMBO RESULT",
@@ -64,28 +51,30 @@ async function createLimboImage(data) {
 
 
 
+    ctx.fillStyle = "#ffffff";
+
     ctx.font =
-        "bold 50px Arial";
+        "bold 55px DejaVu";
 
 
     ctx.fillText(
-        "CRASHED AT: " + data.crash + "x",
+        `CRASHED AT ${data.crash}x`,
         100,
-        300
+        280
     );
 
 
     ctx.fillText(
-        "BET: " + data.bet,
+        `BET ${data.bet}`,
         100,
         380
     );
 
 
     ctx.fillText(
-        "TARGET: " + data.target + "x",
+        `TARGET ${data.target}x`,
         100,
-        460
+        480
     );
 
 
@@ -100,7 +89,6 @@ async function createLimboImage(data) {
         }
 
     );
-
 
 }
 
