@@ -17,7 +17,7 @@ module.exports = {
             );
 
 
-        const reward = 400;
+        const reward = 2;
 
 
         await userService.updateBalance(
