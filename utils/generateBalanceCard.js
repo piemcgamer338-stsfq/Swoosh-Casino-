@@ -9,6 +9,7 @@ async function generateBalanceCard(user, data) {
     const ctx = canvas.getContext("2d");
 
 
+    // Load background card
     const bgPath = path.join(
         process.cwd(),
         "assets",
@@ -31,44 +32,7 @@ async function generateBalanceCard(user, data) {
     );
 
 
-   const avatar = await loadImage(
-    user.displayAvatarURL({
-        extension: "jpg",
-        size: 512,
-        forceStatic: true
-    })
-);
-
-    ctx.save();
-
-    ctx.beginPath();
-
-    ctx.arc(
-        175,
-        175,
-        70,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.closePath();
-
-    ctx.clip();
-
-
-    ctx.drawImage(
-        avatar,
-        105,
-        105,
-        140,
-        140
-    );
-
-
-    ctx.restore();
-
-
-
+    // Username
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 42px Arial";
 
@@ -79,7 +43,7 @@ async function generateBalanceCard(user, data) {
     );
 
 
-
+    // Balance
     ctx.fillStyle = "#FFD54F";
     ctx.font = "bold 82px Arial";
 
@@ -90,7 +54,7 @@ async function generateBalanceCard(user, data) {
     );
 
 
-
+    // Stats
     ctx.fillStyle = "#ffffff";
     ctx.font = "40px Arial";
 
@@ -116,11 +80,9 @@ async function generateBalanceCard(user, data) {
     );
 
 
-
     return canvas.toBuffer("image/png");
 
 }
-
 
 
 module.exports = generateBalanceCard;
