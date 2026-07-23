@@ -1,4 +1,5 @@
 const blackjackGames = require("../games/blackjackManager");
+const balanceService = require("../services/balanceService");
 
 const {
     dealerPlay,
@@ -9,15 +10,15 @@ const {
     gameEmbed
 } = require("../utils/blackjackRenderer");
 
-const db = require("../database/db"); // <-- change this to your balance database
-
 module.exports = {
 
     customId: "bj_stand",
 
     async execute(interaction) {
 
-        const game = blackjackGames.get(interaction.message.id);
+        const game = blackjackGames.get(
+            interaction.message.id
+        );
 
         if (!game)
             return interaction.reply({
@@ -48,41 +49,41 @@ module.exports = {
 
         let text = "";
 
-        // ------------------------
-        // PAYOUT
-        // ------------------------
-
         if (result === "win") {
 
-            text = `🎉 **You won ${game.bet}$**`;
+            text = "🎉 **You Win!**";
 
-            await db.addBalance(
+            await balanceService.addBalance(
                 game.userId,
-                game.bet
+                game.bet * 2,
+                "blackjack_win"
             );
 
         }
 
-        else if (result === "lose") {
+        else if (result === "push") {
 
-            text = `💀 **You lost ${game.bet}$**`;
+            text = "🤝 **Push!**";
 
-            await db.removeBalance(
+            await balanceService.addBalance(
                 game.userId,
-                game.bet
+                game.bet,
+                "blackjack_push"
             );
 
         }
 
         else {
 
-            text = "🤝 **Push**";
+            text = "💀 **Dealer Wins!**";
 
         }
 
-        blackjackGames.delete(interaction.message.id);
+        blackjackGames.delete(
+            interaction.message.id
+        );
 
-        await interaction.update({
+        return interaction.update({
 
             content: text,
 
