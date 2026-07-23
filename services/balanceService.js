@@ -1,81 +1,102 @@
-const userService = require("./userService");
-const transactionService = require("./transactionService");
+const blackjackGames = require("../games/blackjackManager");
 
+const {
+    dealerPlay,
+    getResult
+} = require("../utils/blackjackLogic");
 
-async function hasBalance(discordId, amount) {
+const {
+    gameEmbed
+} = require("../utils/blackjackRenderer");
 
-    const user = await userService.getUser(discordId);
-
-    return Number(user.balance) >= Number(amount);
-
-}
-
-
-
-async function addBalance(
-    discordId,
-    amount,
-    type = "credit"
-) {
-
-    const user =
-        await userService.updateBalance(
-            discordId,
-            amount
-        );
-
-
-    await transactionService.addTransaction(
-        discordId,
-        type,
-        amount
-    );
-
-
-    return user;
-
-}
-
-
-
-async function removeBalance(
-    discordId,
-    amount,
-    type = "debit"
-) {
-
-    const user =
-        await userService.getUser(discordId);
-
-
-    if (
-        Number(user.balance) < Number(amount)
-    ) {
-        return null;
-    }
-
-
-    await userService.updateBalance(
-        discordId,
-        -amount
-    );
-
-
-    await transactionService.addTransaction(
-        discordId,
-        type,
-        -amount
-    );
-
-
-    return await userService.getUser(discordId);
-
-}
-
-
+const balanceService = require("../services/balanceService");
 
 module.exports = {
-    hasBalance,
-    addBalance,
-    removeBalance
+
+    customId: "bj_stand",
+
+    async execute(interaction) {
+
+        const game = blackjackGames.get(
+            interaction.message.id
+        );
+
+        if (!game)
+            return interaction.reply({
+                content: "❌ Game not found.",
+                ephemeral: true
+            });
+
+        if (interaction.user.id !== game.userId)
+            return interaction.reply({
+                content: "❌ This isn't your game.",
+                ephemeral: true
+            });
+
+        if (game.finished)
+            return interaction.reply({
+                content: "❌ Game already finished.",
+                ephemeral: true
+            });
+
+        dealerPlay(game.dealer);
+
+        game.finished = true;
+
+        const result = getResult(
+            game.player,
+            game.dealer
+        );
+
+        let text = "";
+
+        if (result === "win") {
+
+            text = `🎉 **You Won!** (+${game.bet}$)`;
+
+            await balanceService.addBalance(
+                game.userId,
+                game.bet,
+                "blackjack_win"
+            );
+
+        }
+
+        else if (result === "lose") {
+
+            text = `💀 **Dealer Wins!** (-${game.bet}$)`;
+
+            await balanceService.removeBalance(
+                game.userId,
+                game.bet,
+                "blackjack_loss"
+            );
+
+        }
+
+        else {
+
+            text = "🤝 **Push!**";
+
+        }
+
+        blackjackGames.delete(
+            interaction.message.id
+        );
+
+        await interaction.update({
+
+            content: text,
+
+            ...gameEmbed(
+                game,
+                true
+            ),
+
+            components: []
+
+        });
+
+    }
+
 };
