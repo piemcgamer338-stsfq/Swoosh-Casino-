@@ -6,7 +6,11 @@ const {
     AttachmentBuilder
 } = require("discord.js");
 
+const balanceService = require("../../services/balanceService");
+
+
 const rouletteGames = new Map();
+
 
 
 module.exports = {
@@ -18,10 +22,14 @@ module.exports = {
     ],
 
 
+
     async execute(message, args) {
 
 
-        const bet = Number(args[0]);
+
+        const bet =
+            Number(args[0]);
+
 
 
         if (!bet || bet <= 0) {
@@ -31,11 +39,6 @@ module.exports = {
             );
 
         }
-
-
-
-        const balanceService =
-            require("../../services/balanceService");
 
 
 
@@ -57,10 +60,11 @@ module.exports = {
 
 
 
+
         const image =
             new AttachmentBuilder(
 
-                "./app/assets/roulette.png",
+                "./assets/roulette.png",
 
                 {
                     name:
@@ -68,6 +72,8 @@ module.exports = {
                 }
 
             );
+
+
 
 
 
@@ -83,21 +89,29 @@ module.exports = {
 
             .setDescription(
 `
-# 🎲 Place your bets
+# Place your bets
 
-💰 **Bet per selection:**
+💰 **Bet per button**
 ${bet} Points
 
 
-Choose one or more options below.
+Each selected option costs ${bet} Points.
 
-⚠️ Each button costs the bet amount.
+Choose your predictions:
 `
             )
 
             .setImage(
                 "attachment://roulette.png"
-            );
+            )
+
+            .setFooter({
+                text:
+                "Roulette"
+            });
+
+
+
 
 
 
@@ -108,24 +122,58 @@ Choose one or more options below.
 
             .addComponents(
 
-                new ButtonBuilder()
-                .setCustomId("roulette_col1")
-                .setLabel("Column 1")
-                .setStyle(ButtonStyle.Danger),
-
 
                 new ButtonBuilder()
-                .setCustomId("roulette_col2")
-                .setLabel("Column 2")
-                .setStyle(ButtonStyle.Danger),
+
+                .setCustomId(
+                    "roulette_col1"
+                )
+
+                .setLabel(
+                    "Column 1"
+                )
+
+                .setStyle(
+                    ButtonStyle.Danger
+                ),
+
 
 
                 new ButtonBuilder()
-                .setCustomId("roulette_col3")
-                .setLabel("Column 3")
-                .setStyle(ButtonStyle.Danger)
+
+                .setCustomId(
+                    "roulette_col2"
+                )
+
+                .setLabel(
+                    "Column 2"
+                )
+
+                .setStyle(
+                    ButtonStyle.Danger
+                ),
+
+
+
+                new ButtonBuilder()
+
+                .setCustomId(
+                    "roulette_col3"
+                )
+
+                .setLabel(
+                    "Column 3"
+                )
+
+                .setStyle(
+                    ButtonStyle.Danger
+                )
 
             );
+
+
+
+
 
 
 
@@ -135,24 +183,58 @@ Choose one or more options below.
 
             .addComponents(
 
-                new ButtonBuilder()
-                .setCustomId("roulette_red")
-                .setLabel("Red")
-                .setStyle(ButtonStyle.Danger),
-
 
                 new ButtonBuilder()
-                .setCustomId("roulette_black")
-                .setLabel("Black")
-                .setStyle(ButtonStyle.Secondary),
+
+                .setCustomId(
+                    "roulette_red"
+                )
+
+                .setLabel(
+                    "Red"
+                )
+
+                .setStyle(
+                    ButtonStyle.Danger
+                ),
+
 
 
                 new ButtonBuilder()
-                .setCustomId("roulette_odd")
-                .setLabel("Odd")
-                .setStyle(ButtonStyle.Primary)
+
+                .setCustomId(
+                    "roulette_black"
+                )
+
+                .setLabel(
+                    "Black"
+                )
+
+                .setStyle(
+                    ButtonStyle.Secondary
+                ),
+
+
+
+                new ButtonBuilder()
+
+                .setCustomId(
+                    "roulette_odd"
+                )
+
+                .setLabel(
+                    "Odd"
+                )
+
+                .setStyle(
+                    ButtonStyle.Primary
+                )
 
             );
+
+
+
+
 
 
 
@@ -162,44 +244,86 @@ Choose one or more options below.
 
             .addComponents(
 
-                new ButtonBuilder()
-                .setCustomId("roulette_even")
-                .setLabel("Even")
-                .setStyle(ButtonStyle.Primary),
-
 
                 new ButtonBuilder()
-                .setCustomId("roulette_low")
-                .setLabel("1-16")
-                .setStyle(ButtonStyle.Success),
+
+                .setCustomId(
+                    "roulette_even"
+                )
+
+                .setLabel(
+                    "Even"
+                )
+
+                .setStyle(
+                    ButtonStyle.Primary
+                ),
+
 
 
                 new ButtonBuilder()
-                .setCustomId("roulette_high")
-                .setLabel("17-36")
-                .setStyle(ButtonStyle.Success)
+
+                .setCustomId(
+                    "roulette_low"
+                )
+
+                .setLabel(
+                    "1-16"
+                )
+
+                .setStyle(
+                    ButtonStyle.Success
+                ),
+
+
+
+                new ButtonBuilder()
+
+                .setCustomId(
+                    "roulette_high"
+                )
+
+                .setLabel(
+                    "17-36"
+                )
+
+                .setStyle(
+                    ButtonStyle.Success
+                )
 
             );
 
 
 
-        const msg = await message.reply({
 
-            embeds:[
-                embed
-            ],
 
-            files:[
-                image
-            ],
 
-            components:[
-                row1,
-                row2,
-                row3
-            ]
 
-        });
+        const msg =
+            await message.reply({
+
+                embeds:[
+                    embed
+                ],
+
+                files:[
+                    image
+                ],
+
+                components:[
+
+                    row1,
+                    row2,
+                    row3
+
+                ]
+
+            });
+
+
+
+
+
 
 
 
@@ -212,9 +336,12 @@ Choose one or more options below.
                 userId:
                 message.author.id,
 
+
                 bet,
 
+
                 bets: [],
+
 
                 messageId:
                 msg.id
@@ -222,6 +349,7 @@ Choose one or more options below.
             }
 
         );
+
 
 
     }
