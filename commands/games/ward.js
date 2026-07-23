@@ -18,6 +18,7 @@ module.exports = {
     aliases: ["war"],
 
 
+
     async execute(message, args) {
 
 
@@ -35,7 +36,7 @@ module.exports = {
 
 
 
-        const canPlay =
+        const balance =
             await hasBalance(
                 message.author.id,
                 bet
@@ -43,7 +44,7 @@ module.exports = {
 
 
 
-        if (!canPlay) {
+        if (!balance) {
 
             return message.reply(
                 "❌ You don't have enough balance."
@@ -57,6 +58,47 @@ module.exports = {
             message.author.id,
             bet,
             "ward_bet"
+        );
+
+
+
+        // Loading message
+
+        const loading =
+            await message.reply({
+
+                embeds: [
+
+                    new EmbedBuilder()
+
+                    .setColor("#f1c40f")
+
+                    .setTitle("⚔️ War Dice")
+
+                    .setDescription(
+`
+🎲 **Rolling dice...**
+
+👤 Player: ❓
+
+🤵 Dealer: ❓
+
+━━━━━━━━━━━━
+
+⏳ Please wait...
+`
+                    )
+
+                ]
+
+            });
+
+
+
+        // 3 second casino delay
+
+        await new Promise(
+            resolve => setTimeout(resolve, 3000)
         );
 
 
@@ -76,6 +118,7 @@ module.exports = {
 
 
         let result = "";
+
         let color = "#2ecc71";
 
 
@@ -97,11 +140,17 @@ module.exports = {
 
 
             result =
-            `🏆 **Player Wins!**\n💰 Won: **${payout} Points**`;
+`
+🏆 **YOU WIN!**
+
+💰 Payout: **${payout} Points**
+`;
 
 
 
-        } else if (dealerRoll > playerRoll) {
+        }
+
+        else if (dealerRoll > playerRoll) {
 
 
 
@@ -109,11 +158,17 @@ module.exports = {
 
 
             result =
-            `💀 **Dealer Wins!**\n💸 Lost: **${bet} Points**`;
+`
+💀 **DEALER WINS!**
+
+💸 Lost: **${bet} Points**
+`;
 
 
 
-        } else {
+        }
+
+        else {
 
 
 
@@ -129,9 +184,16 @@ module.exports = {
 
 
             result =
-            `🤝 **Draw!**\n💰 Refund: **${bet} Points**`;
+`
+🤝 **DRAW!**
+
+💰 Refund: **${bet} Points**
+`;
+
+
 
         }
+
 
 
 
@@ -151,6 +213,8 @@ module.exports = {
 🤵 **Dealer**
 🎲 Roll: **${dealerRoll}**
 
+━━━━━━━━━━━━
+
 ${result}
 `
             )
@@ -159,13 +223,14 @@ ${result}
 
 
 
-        return message.reply({
+        return loading.edit({
 
-            embeds:[
+            embeds: [
                 embed
             ]
 
         });
+
 
 
     }
