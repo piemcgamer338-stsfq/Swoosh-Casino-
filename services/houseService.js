@@ -1,27 +1,80 @@
 const db = require("../database/database");
 
-function getHouse() {
-    return db.prepare(
-        "SELECT * FROM house WHERE id = 1"
-    ).get();
+
+async function getHouse() {
+
+    const result = await db.query(
+        `
+        SELECT *
+        FROM house
+        WHERE id = 1
+        `
+    );
+
+
+    return result.rows[0];
+
 }
 
-function add(amount) {
-    db.prepare(
-        "UPDATE house SET balance = balance + ? WHERE id = 1"
-    ).run(amount);
+
+
+async function add(amount) {
+
+    const result = await db.query(
+        `
+        UPDATE house
+        SET balance = balance + $1
+        WHERE id = 1
+        RETURNING *
+        `,
+        [
+            amount
+        ]
+    );
+
+
+    return result.rows[0];
+
 }
 
-function remove(amount) {
-    db.prepare(
-        "UPDATE house SET balance = balance - ? WHERE id = 1"
-    ).run(amount);
+
+
+async function remove(amount) {
+
+    const result = await db.query(
+        `
+        UPDATE house
+        SET balance = balance - $1
+        WHERE id = 1
+        RETURNING *
+        `,
+        [
+            amount
+        ]
+    );
+
+
+    return result.rows[0];
+
 }
 
-function canPay(amount) {
-    const house = getHouse();
-    return house.balance >= amount;
+
+
+async function canPay(amount) {
+
+    const house = await getHouse();
+
+
+    if (!house) {
+        return false;
+    }
+
+
+    return Number(house.balance) >= Number(amount);
+
 }
+
+
 
 module.exports = {
     getHouse,
