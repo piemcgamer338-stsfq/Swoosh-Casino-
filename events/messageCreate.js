@@ -4,6 +4,7 @@ module.exports = {
     name: "messageCreate",
 
     async execute(message, client) {
+
         if (message.author.bot) return;
         if (!message.guild) return;
 
@@ -23,13 +24,20 @@ module.exports = {
         if (!command) return;
 
         try {
+
             await command.execute(message, args, client);
+
         } catch (error) {
+
+            console.error("========== COMMAND ERROR ==========");
             console.error(error);
+            console.error("===================================");
 
             return message.reply({
-                content: "❌ An unexpected error occurred while executing this command."
+                content: `❌ Error:\n\`\`\`\n${error.stack || error.message}\n\`\`\``
             });
+
         }
+
     }
 };
