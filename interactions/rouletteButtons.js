@@ -42,6 +42,7 @@ function getColumn(number) {
 
 
 
+
 function checkBet(type, number) {
 
 
@@ -119,6 +120,11 @@ module.exports = {
     async execute(interaction) {
 
 
+        // instantly tell Discord we received click
+        await interaction.deferUpdate();
+
+
+
 
         const game =
             rouletteGames.get(
@@ -130,15 +136,14 @@ module.exports = {
         if (!game) {
 
 
-            return interaction.reply({
+            return interaction.editReply({
 
                 content:
-                "❌ Roulette game expired.",
+                "❌ Roulette expired.",
 
-                ephemeral:true
+                components:[]
 
             });
-
 
         }
 
@@ -150,7 +155,7 @@ module.exports = {
         ) {
 
 
-            return interaction.reply({
+            return interaction.followUp({
 
                 content:
                 "❌ This is not your roulette.",
@@ -158,7 +163,6 @@ module.exports = {
                 ephemeral:true
 
             });
-
 
         }
 
@@ -177,9 +181,7 @@ module.exports = {
                 interaction.customId
             );
 
-
         }
-
 
 
 
@@ -189,7 +191,6 @@ module.exports = {
         const totalBet =
             game.bet *
             game.bets.length;
-
 
 
 
@@ -208,7 +209,8 @@ module.exports = {
 
 
 
-        if (!hasBalance) {
+
+        if(!hasBalance) {
 
 
             rouletteGames.delete(
@@ -216,7 +218,7 @@ module.exports = {
             );
 
 
-            return interaction.update({
+            return interaction.editReply({
 
 
                 embeds:[
@@ -230,17 +232,15 @@ module.exports = {
                     )
 
                     .setDescription(
-
 `
 ❌ Not enough balance.
 
-Selected bets:
-${game.bets.length}
+Selected:
+${game.bets.length} bets
 
 Required:
 ${totalBet} Points
 `
-
                     )
 
                 ],
@@ -251,7 +251,6 @@ ${totalBet} Points
             });
 
 
-
         }
 
 
@@ -260,15 +259,23 @@ ${totalBet} Points
 
 
 
-        await interaction.update({
+
+        // update selected buttons
+
+
+        await interaction.editReply({
 
 
             content:
-            `🎰 Selected bets: **${game.bets.length}**\n💰 Total: **${totalBet} Points**`,
+
+`🎰 Bets Selected: **${game.bets.length}**
+
+💰 Total Bet: **${totalBet} Points**`,
 
 
             components:
             interaction.message.components
+
 
         });
 
@@ -276,92 +283,119 @@ ${totalBet} Points
 
 
 
-        // spin after 3 selections
-
-        if (game.bets.length >= 3) {
 
 
 
-            await balanceService.removeBalance(
+        // wait until 3 choices
 
-                game.userId,
 
-                totalBet,
+        if(game.bets.length < 3)
+            return;
 
-                "roulette_bet"
 
+
+
+
+
+
+
+        await balanceService.removeBalance(
+
+            game.userId,
+
+            totalBet,
+
+            "roulette_bet"
+
+        );
+
+
+
+
+
+
+        await interaction.editReply({
+
+            content:
+            "🎰 **Roulette spinning...**",
+
+            embeds:[],
+
+            components:[]
+
+        });
+
+
+
+
+
+
+        await new Promise(resolve =>
+            setTimeout(resolve,5000)
+        );
+
+
+
+
+
+
+
+        const number =
+            Math.floor(
+                Math.random()*37
             );
 
 
 
 
-            await interaction.message.edit({
-
-                content:
-                "🎰 Spinning roulette...",
-
-                components:[]
-
-            });
-
-
-
-
-            await new Promise(
-                r => setTimeout(r,5000)
-            );
+        const color =
+            redNumbers.includes(number)
+            ?
+            "🔴 Red"
+            :
+            number === 0
+            ?
+            "🟢 Green"
+            :
+            "⚫ Black";
 
 
 
 
 
-            const number =
-                Math.floor(
-                    Math.random()*37
-                );
+        let payout = 0;
 
 
 
 
-            const column =
-                getColumn(number);
+
+        for(
+            const bet of game.bets
+        ) {
 
 
-
-            let winnings = 0;
-
-
-
-            for(
-                const bet of game.bets
+            if(
+                checkBet(
+                    bet,
+                    number
+                )
             ) {
 
 
-
                 if(
-                    checkBet(
-                        bet,
-                        number
-                    )
+                    bet.includes("col")
                 ) {
 
 
-
-                    if(
-                        bet.includes("col")
-                    ) {
-
-                        winnings +=
-                        game.bet * 3;
+                    payout +=
+                    game.bet * 3;
 
 
-                    } else {
+                } else {
 
 
-                        winnings +=
-                        game.bet * 2;
-
-                    }
+                    payout +=
+                    game.bet * 2;
 
 
                 }
@@ -370,114 +404,94 @@ ${totalBet} Points
             }
 
 
-
-
-
-
-            if(winnings > 0) {
-
-
-                await balanceService.addBalance(
-
-                    game.userId,
-
-                    winnings,
-
-                    "roulette_win"
-
-                );
-
-
-            }
+        }
 
 
 
 
 
 
-            const color =
-                redNumbers.includes(number)
-                ?
-                "🔴 Red"
-                :
-                number === 0
-                ?
-                "🟢 Green"
-                :
-                "⚫ Black";
+
+        if(payout > 0) {
+
+
+            await balanceService.addBalance(
+
+                game.userId,
+
+                payout,
+
+                "roulette_win"
+
+            );
+
+        }
 
 
 
 
 
 
-            await interaction.message.edit({
 
 
-                embeds:[
+        await interaction.editReply({
 
 
-                    new EmbedBuilder()
 
-                    .setColor(
-                        winnings
-                        ?
-                        "#00ff88"
-                        :
-                        "#ff0000"
-                    )
+            embeds:[
 
+                new EmbedBuilder()
 
-                    .setTitle(
-                        "🎰 Roulette Result"
-                    )
+                .setColor(
+                    payout
+                    ?
+                    "#00ff88"
+                    :
+                    "#ff0000"
+                )
 
 
-                    .setDescription(
+                .setTitle(
+                    "🎰 Roulette Result"
+                )
 
+
+                .setDescription(
 `
-# Winning Number
-
-# ${number}
-
+# 🎲 ${number}
 
 ${color}
 
-
 Column:
-${column || "None"}
+${getColumn(number) || "None"}
 
 
 ${
-winnings
+payout
 ?
-`🏆 Won **${winnings} Points**`
+`🏆 Won: **${payout} Points**`
 :
-"💀 Lost"
+"💀 You Lost"
 }
 
 `
+                )
 
-                    )
-
-
-                ],
+            ],
 
 
-                components:[]
+            components:[]
 
-            });
+        });
 
 
 
 
-            rouletteGames.delete(
-                interaction.message.id
-            );
 
 
-
-        }
+        rouletteGames.delete(
+            interaction.message.id
+        );
 
 
 
