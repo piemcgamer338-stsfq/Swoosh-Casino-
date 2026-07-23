@@ -1,13 +1,19 @@
 const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const path = require("path");
+const { pathToFileURL } = require("url");
 
 async function generateBalanceCard(user, data) {
 
     const canvas = createCanvas(1600, 900);
     const ctx = canvas.getContext("2d");
 
-   const bg = await loadImage(
-    `${process.cwd()}/assets/cards/balance.png`
+    const bgPath = path.join(
+    process.cwd(),
+    "assets/cards/balance.png"
+);
+
+const bg = await loadImage(
+    pathToFileURL(bgPath).href
 );
 
     ctx.drawImage(bg, 0, 0, 1600, 900);
