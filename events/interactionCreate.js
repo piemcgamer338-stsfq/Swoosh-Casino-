@@ -1,26 +1,32 @@
 module.exports = {
+
     name: "interactionCreate",
 
     async execute(interaction, client) {
 
+
+        if (!interaction.isButton() && !interaction.isStringSelectMenu()) {
+            return;
+        }
+
+
         try {
 
-            // Button games (coinflip, mines, blackjack etc.)
-            // are handled by collectors inside the command files
-            if (interaction.isButton()) {
 
-                if (
-                    interaction.customId.startsWith("cf_")
-                ) {
-                    return;
-                }
-
-            }
-
-
-            if (!interaction.isStringSelectMenu() && !interaction.isButton()) {
+            // Mines buttons
+            if (
+                interaction.customId.startsWith("mine_") ||
+                interaction.customId === "cashout"
+            ) {
                 return;
             }
+
+
+
+            if (!client.interactions) {
+                return;
+            }
+
 
 
             const handler =
@@ -29,7 +35,11 @@ module.exports = {
                 );
 
 
-            if (!handler) return;
+
+            if (!handler) {
+                return;
+            }
+
 
 
             await handler.execute(
@@ -38,12 +48,15 @@ module.exports = {
             );
 
 
-        } catch (error) {
+
+        } catch(error) {
+
 
             console.error(
                 "Interaction Error:",
                 error
             );
+
 
 
             if (
@@ -52,20 +65,33 @@ module.exports = {
             ) {
 
                 await interaction.followUp({
-                    content: "❌ Something went wrong.",
-                    ephemeral: true
-                });
+
+                    content:
+                    "❌ Something went wrong.",
+
+                    ephemeral:true
+
+                }).catch(()=>{});
+
 
             } else {
 
+
                 await interaction.reply({
-                    content: "❌ Something went wrong.",
-                    ephemeral: true
-                });
+
+                    content:
+                    "❌ Something went wrong.",
+
+                    ephemeral:true
+
+                }).catch(()=>{});
 
             }
 
+
         }
 
+
     }
+
 };
