@@ -1,94 +1,124 @@
 const blackjackGames = require("../games/blackjackManager");
 
 const {
-    handValue
+    randomCard,
+    handValue,
+    isBust
 } = require("../utils/blackjackLogic");
 
 const {
     gameEmbed
 } = require("../utils/blackjackRenderer");
 
+
 module.exports = {
 
     customId: "bj_hit",
 
+
     async execute(interaction) {
 
-        const game = blackjackGames.get(
-            interaction.message.id
-        );
 
-        if (!game)
+        const game =
+            blackjackGames.get(
+                interaction.message.id
+            );
+
+
+        if (!game) {
+
             return interaction.reply({
                 content: "❌ Game not found.",
                 ephemeral: true
             });
 
-        if (interaction.user.id !== game.userId)
+        }
+
+
+
+        if (
+            interaction.user.id !== game.userId
+        ) {
+
             return interaction.reply({
-                content: "❌ This isn't your game.",
+                content: "❌ This is not your game.",
                 ephemeral: true
             });
 
-        if (game.finished)
+        }
+
+
+
+        if (game.finished) {
+
             return interaction.reply({
                 content: "❌ Game already finished.",
                 ephemeral: true
             });
 
-        const suits = ["♠","♥","♦","♣"];
-        const values = [
-            "A","2","3","4","5","6","7",
-            "8","9","10","J","Q","K"
-        ];
+        }
 
-        game.player.push({
 
-            suit: suits[
-                Math.floor(
-                    Math.random() * suits.length
-                )
-            ],
 
-            value: values[
-                Math.floor(
-                    Math.random() * values.length
-                )
-            ]
+        game.player.push(
+            randomCard()
+        );
 
-        });
 
-        if (handValue(game.player) > 21) {
+
+        const value =
+            handValue(
+                game.player
+            );
+
+
+
+        if (isBust(game.player)) {
+
 
             game.finished = true;
+
 
             blackjackGames.delete(
                 interaction.message.id
             );
 
+
             return interaction.update({
 
-                content: "💀 **Bust! Dealer Wins!**",
+                content:
+                `💀 **Bust! You lose!**\nYour total: **${value}**`,
+
 
                 ...gameEmbed(
                     game,
                     true
                 ),
 
+
                 components: []
 
             });
 
+
         }
 
+
+
         return interaction.update({
+
+            content:
+            `🃏 **Blackjack**\nBet: **${game.bet} Points**`,
+
 
             ...gameEmbed(
                 game,
                 false
             )
 
+
         });
+
 
     }
 
