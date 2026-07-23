@@ -2,6 +2,8 @@ const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const fs = require("fs");
 const path = require("path");
 
+console.log("🔥 USING NEW BALANCE GENERATOR FILE");
+
 async function generateBalanceCard(user, data) {
 
     const canvas = createCanvas(1600, 900);
