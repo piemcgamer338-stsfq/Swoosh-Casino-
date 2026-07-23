@@ -7,14 +7,14 @@ const {
 } = require("discord.js");
 
 
-async function createLimboImage(data){
+async function createLimboImage(data) {
 
 
-    console.log("🔥 LIMBO RENDERER RUNNING");
+    console.log("🔥 LIMBO IMAGE CREATED");
 
 
     const canvas =
-        createCanvas(1200,630);
+        createCanvas(1200, 630);
 
 
     const ctx =
@@ -22,9 +22,9 @@ async function createLimboImage(data){
 
 
 
-    // Background
+    // background
 
-    ctx.fillStyle = "#050505";
+    ctx.fillStyle = "#111111";
 
     ctx.fillRect(
         0,
@@ -35,7 +35,20 @@ async function createLimboImage(data){
 
 
 
-    // Title
+    // BIG BOX TEST
+
+    ctx.fillStyle = "#ff0000";
+
+    ctx.fillRect(
+        50,
+        50,
+        1100,
+        150
+    );
+
+
+
+    // TEXT
 
     ctx.fillStyle = "#ffffff";
 
@@ -44,74 +57,36 @@ async function createLimboImage(data){
 
 
     ctx.fillText(
-        "🚀 LIMBO",
-        80,
-        100
+        "LIMBO RESULT",
+        100,
+        150
     );
 
 
 
     ctx.font =
-        "bold 45px Arial";
+        "bold 50px Arial";
 
 
     ctx.fillText(
-        `💰 Bet: ${data.bet} Points`,
-        100,
-        230
-    );
-
-
-    ctx.fillText(
-        `🎯 Target: ${data.target}x`,
+        "CRASHED AT: " + data.crash + "x",
         100,
         300
     );
 
 
     ctx.fillText(
-        `💥 Crashed at: ${data.crash}x`,
+        "BET: " + data.bet,
         100,
-        370
+        380
     );
 
 
-
-
-    ctx.font =
-        "bold 65px Arial";
-
-
-
-    if(data.win){
-
-
-        ctx.fillStyle =
-            "#00ff88";
-
-
-        ctx.fillText(
-            "🏆 YOU WON",
-            100,
-            500
-        );
-
-
-    } else {
-
-
-        ctx.fillStyle =
-            "#ff3333";
-
-
-        ctx.fillText(
-            "💀 YOU LOST",
-            100,
-            500
-        );
-
-    }
-
+    ctx.fillText(
+        "TARGET: " + data.target + "x",
+        100,
+        460
+    );
 
 
 
@@ -125,6 +100,7 @@ async function createLimboImage(data){
         }
 
     );
+
 
 }
 
