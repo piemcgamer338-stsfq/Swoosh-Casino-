@@ -1,33 +1,38 @@
 const db = require("../database/database");
 
-function addXP(discordId, amount) {
+async function addXP(discordId, amount) {
+    // Get current XP + level
+    const result = await db.query(
+        "SELECT xp, level FROM users WHERE discord_id = $1",
+        [discordId]
+    );
 
-    db.prepare(`
-        UPDATE users
-        SET xp = xp + ?
-        WHERE discord_id = ?
-    `).run(amount, discordId);
+    if (result.rows.length === 0) return null;
 
-    let user = db.prepare(
-        "SELECT xp, level FROM users WHERE discord_id = ?"
-    ).get(discordId);
+    let user = result.rows[0];
 
-    while (user.xp >= user.level * 100) {
+    let xp = Number(user.xp) + Number(amount);
+    let level = Number(user.level);
 
-        user.xp -= user.level * 100;
-        user.level++;
-
+    while (xp >= level * 100) {
+        xp -= level * 100;
+        level++;
     }
 
-    db.prepare(`
+    await db.query(
+        `
         UPDATE users
-        SET
-            xp = ?,
-            level = ?
-        WHERE discord_id = ?
-    `).run(user.xp, user.level, discordId);
+        SET xp = $1,
+            level = $2
+        WHERE discord_id = $3
+        `,
+        [xp, level, discordId]
+    );
 
-    return user;
+    return {
+        xp,
+        level
+    };
 }
 
 module.exports = {
