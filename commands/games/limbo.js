@@ -2,93 +2,19 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
-
-const {
-    hasBalance,
-    removeBalance,
-    addBalance
-} = require("../../services/balanceService");
-
-
-const {
-    createLimboImage
-} = require("../../utils/limboRenderer");
-
-
-
-function generateCrash(){
-
-
-    const roll =
-        Math.random();
-
-
-    let crash;
-
-
-
-    if(roll < 0.55){
-
-        // common crashes
-        crash =
-            1 +
-            Math.random() * 2;
-
-
-    }
-
-    else if(roll < 0.85){
-
-        // medium
-        crash =
-            2 +
-            Math.random() * 8;
-
-
-    }
-
-    else if(roll < 0.98){
-
-        // rare
-        crash =
-            10 +
-            Math.random() * 40;
-
-
-    }
-
-    else{
-
-        // jackpot
-        crash =
-            50 +
-            Math.random() * 50;
-
-    }
-
-
-
-    return Number(
-        crash.toFixed(2)
-    );
-
-}
-
-
-
+const balanceService = require("../../services/balanceService");
 
 
 module.exports = {
 
+    name: "limbo",
 
-    name:"limbo",
+    aliases: [
+        "l"
+    ],
 
-    aliases:["rocket"],
 
-
-
-    async execute(message,args){
-
+    async execute(message, args) {
 
 
         const bet =
@@ -100,51 +26,44 @@ module.exports = {
 
 
 
-        if(
-            !bet ||
-            bet <= 0 ||
-            !target
-        ){
+        if (!bet || !target) {
 
             return message.reply(
-                "❌ Usage: `.limbo <bet> <multiplier>`\nExample: `.limbo 10 2`"
+                "❌ Usage: `.limbo <bet> <multiplier>`"
             );
 
         }
 
 
 
-
-        if(target < 1.1){
+        if (bet <= 0) {
 
             return message.reply(
-                "❌ Minimum multiplier is 1.10x"
+                "❌ Invalid bet."
             );
 
         }
 
 
 
-        if(target > 100){
+        if (target < 1.1 || target > 100) {
 
             return message.reply(
-                "❌ Maximum multiplier is 100x"
+                "❌ Multiplier must be between 1.1x and 100x."
             );
 
         }
 
 
 
-
-        const canPlay =
-            await hasBalance(
+        const hasBalance =
+            await balanceService.hasBalance(
                 message.author.id,
                 bet
             );
 
 
-
-        if(!canPlay){
+        if (!hasBalance) {
 
             return message.reply(
                 "❌ You don't have enough balance."
@@ -154,64 +73,72 @@ module.exports = {
 
 
 
+        /*
+            Limbo logic
 
-        await removeBalance(
-            message.author.id,
-            bet,
-            "limbo_bet"
-        );
+            Low multipliers:
+            - Better chance
+
+            High multipliers:
+            - Rare
+
+            Max crash = 100x
+        */
 
 
-
-
-
-        const loading =
-            await message.reply({
-
-                embeds:[
-
-                    new EmbedBuilder()
-
-                    .setColor("#f39c12")
-
-                    .setTitle("🚀 Limbo")
-
-                    .setDescription(
-`
-💰 Bet:
-**${bet} Points**
-
-🎯 Target:
-**${target.toFixed(2)}x**
-
-🚀 Rocket launching...
-
-⏳ Waiting...
-`
-                    )
-
-                ]
-
-            });
+        let crash;
 
 
 
+        const roll =
+            Math.random();
 
 
 
-        await new Promise(
-            resolve =>
-            setTimeout(resolve,3000)
-        );
+        if (target <= 2) {
+
+
+            if (roll < 0.65) {
+
+                crash =
+                    target +
+                    Math.random() * 3;
+
+            }
+
+            else {
+
+                crash =
+                    1 +
+                    Math.random();
+
+            }
+
+
+        }
+
+        else {
+
+
+            crash =
+                Math.random() * 10 + 1;
+
+
+            if (Math.random() < 0.02) {
+
+                crash =
+                    Math.random() * 90 + 10;
+
+            }
+
+        }
 
 
 
-
-
-        const crash =
-            generateCrash();
-
-
+        crash =
+            Number(
+                crash.toFixed(2)
+            );
 
 
 
@@ -220,15 +147,11 @@ module.exports = {
 
 
 
-
-
         let payout = 0;
 
 
 
-
-        if(win){
-
+        if (win) {
 
             payout =
                 Math.floor(
@@ -236,44 +159,26 @@ module.exports = {
                 );
 
 
-
-            await addBalance(
-
+            await balanceService.addBalance(
                 message.author.id,
-
                 payout,
-
                 "limbo_win"
-
             );
 
 
         }
 
+        else {
 
 
-
-
-        const image =
-            await createLimboImage({
-
+            await balanceService.removeBalance(
+                message.author.id,
                 bet,
-
-                target:
-                    target.toFixed(2),
-
-                crash:
-                    crash.toFixed(2),
-
-                win,
-
-                payout
-
-            });
+                "limbo_loss"
+            );
 
 
-
-
+        }
 
 
 
@@ -282,67 +187,57 @@ module.exports = {
 
             .setColor(
                 win
-                ?
-                "#2ecc71"
-                :
-                "#e74c3c"
+                ? "#00ff88"
+                : "#ff3333"
             )
 
 
             .setTitle(
-                "🚀 Limbo Result"
+                "🚀 LIMBO"
             )
 
 
             .setDescription(
+`
+# 💥 CRASHED AT
 
-                win
+# ${crash}x
 
-                ?
+
+💰 **Bet**
+${bet} Points
+
+
+🎯 **Target**
+${target}x
+
+
+${
+win
+?
+`🏆 **YOU WON**\n💵 Payout: **${payout} Points**`
+:
+`💀 **YOU LOST**`
+}
 
 `
-🏆 **YOU WON**
-
-💰 Payout:
-**${payout} Points**
-`
-
-                :
-
-`
-💀 **YOU LOST**
-
-Rocket crashed too early.
-`
-
             )
 
 
-            .setImage(
-                "attachment://limbo-result.png"
-            );
+            .setFooter({
+                text:
+                message.author.username
+            });
 
 
 
-
-
-
-
-        return loading.edit({
-
+        await message.reply({
             embeds:[
                 embed
-            ],
-
-            files:[
-                image
             ]
-
         });
 
 
-
     }
-
 
 };
