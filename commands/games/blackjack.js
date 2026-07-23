@@ -11,7 +11,7 @@ const { createCanvas } = require("@napi-rs/canvas");
 
 function randomCard() {
 
-    const suits = ["♣", "♦", "♥", "♠"];
+    const suits = ["C", "D", "H", "S"];
 
     const values = [
         "A",
@@ -29,7 +29,6 @@ function randomCard() {
         "K"
     ];
 
-
     return {
         suit: suits[Math.floor(Math.random() * suits.length)],
         value: values[Math.floor(Math.random() * values.length)]
@@ -39,10 +38,9 @@ function randomCard() {
 
 
 
-function cardText(card){
+function formatCard(card) {
 
-    if(!card)
-        return "?";
+    if (!card) return "?";
 
     return `${card.value || "?"}${card.suit || ""}`;
 
@@ -50,69 +48,53 @@ function cardText(card){
 
 
 
-function createBlackjackImage(player, dealer){
+function createBlackjackImage(player, dealer) {
 
-    const canvas = createCanvas(
-        1200,
-        700
-    );
-
+    const canvas = createCanvas(1200, 700);
     const ctx = canvas.getContext("2d");
 
 
-    ctx.fillStyle = "#111827";
-
-    ctx.fillRect(
-        0,
-        0,
-        1200,
-        700
-    );
+    ctx.fillStyle = "#0b1220";
+    ctx.fillRect(0, 0, 1200, 700);
 
 
     ctx.fillStyle = "#ffffff";
 
-    ctx.font = "45px Arial";
 
-
-    ctx.fillText(
-        "🃏 Blackjack",
-        60,
-        70
-    );
+    ctx.font = "50px Arial";
+    ctx.fillText("BLACKJACK", 60, 80);
 
 
     ctx.font = "35px Arial";
 
+    ctx.fillText("Dealer", 60, 180);
+    ctx.fillText("Player", 60, 430);
+
+
+    ctx.font = "45px Arial";
+
+
+    const dealerCards = dealer
+        .map(formatCard)
+        .join("  ");
+
+
+    const playerCards = player
+        .map(formatCard)
+        .join("  ");
+
 
     ctx.fillText(
-        "Dealer",
-        60,
-        150
-    );
-
-
-    ctx.fillText(
-        "Player",
-        60,
-        400
-    );
-
-
-    ctx.font = "50px Arial";
-
-
-    ctx.fillText(
-        dealer.map(cardText).join("  "),
+        String(dealerCards),
         80,
-        230
+        260
     );
 
 
     ctx.fillText(
-        player.map(cardText).join("  "),
+        String(playerCards),
         80,
-        480
+        510
     );
 
 
@@ -122,24 +104,23 @@ function createBlackjackImage(player, dealer){
 
 
 
-
 module.exports = {
 
     name: "blackjack",
 
-    aliases:["bj"],
+    aliases: ["bj"],
 
 
-    async execute(message,args){
+    async execute(message, args) {
 
 
         const bet = Number(args[0]);
 
 
-        if(!bet || bet <= 0){
+        if (!bet || bet <= 0) {
 
             return message.reply(
-                "❌ Enter a valid bet."
+                "Enter a valid bet."
             );
 
         }
@@ -159,32 +140,30 @@ module.exports = {
 
 
 
-        const image =
-            createBlackjackImage(
-                player,
-                dealer
-            );
+        const image = createBlackjackImage(
+            player,
+            dealer
+        );
 
 
 
-        const msg =
-        await message.reply({
+        const msg = await message.reply({
 
             content:
-            `🃏 **Blackjack**\nBet: **${bet} Points**`,
+            `Blackjack\nBet: **${bet} Points**`,
 
 
-            files:[
+            files: [
                 new AttachmentBuilder(
                     image,
                     {
-                        name:"blackjack.png"
+                        name: "blackjack.png"
                     }
                 )
             ],
 
 
-            components:[
+            components: [
 
                 new ActionRowBuilder()
                 .addComponents(
