@@ -2,12 +2,10 @@ const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const fs = require("fs");
 const path = require("path");
 
-
 async function generateBalanceCard(user, data) {
 
     const canvas = createCanvas(1600, 900);
     const ctx = canvas.getContext("2d");
-
 
     const bgPath = path.join(
         process.cwd(),
@@ -16,86 +14,65 @@ async function generateBalanceCard(user, data) {
         "balance.png"
     );
 
-
     const bg = await loadImage(
         fs.readFileSync(bgPath)
     );
 
+    ctx.drawImage(bg, 0, 0, 1600, 900);
 
-    ctx.drawImage(
-        bg,
-        0,
-        0,
-        1600,
-        900
+
+    // TEST TEXT
+    ctx.fillStyle = "red";
+    ctx.font = "bold 80px Arial";
+
+    ctx.fillText(
+        "TEST BALANCE CARD",
+        100,
+        100
     );
 
 
-    ctx.shadowColor = "rgba(0,0,0,0.8)";
-    ctx.shadowBlur = 6;
-
-
-    // Username
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 55px Arial";
+    ctx.fillStyle = "white";
+    ctx.font = "bold 50px Arial";
 
     ctx.fillText(
-        user.username,
-        250,
-        150
+        `User: ${user.username}`,
+        100,
+        250
     );
 
-
-    // Balance (main)
-    ctx.fillStyle = "#FFD700";
-    ctx.font = "bold 90px Arial";
-
     ctx.fillText(
-        `${Number(data.balance || 0).toLocaleString()} Points`,
-        250,
-        300
+        `Balance: ${data.balance}`,
+        100,
+        350
     );
 
-
-    // Smaller information
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 45px Arial";
-
-
     ctx.fillText(
-        `Vault: ${Number(data.vault || 0).toLocaleString()}`,
-        250,
-        470
+        `Vault: ${data.vault}`,
+        100,
+        450
     );
 
-
     ctx.fillText(
-        `Wagered: ${Number(data.wagered || 0).toLocaleString()}`,
-        250,
+        `Wagered: ${data.wagered}`,
+        100,
         550
     );
 
-
     ctx.fillText(
-        `Level: ${Number(data.level || 1)}`,
-        900,
-        470
+        `Level: ${data.level}`,
+        100,
+        650
     );
 
-
     ctx.fillText(
-        `XP: ${Number(data.xp || 0).toLocaleString()}`,
-        900,
-        550
+        `XP: ${data.xp}`,
+        100,
+        750
     );
-
-
-    ctx.shadowBlur = 0;
 
 
     return canvas.toBuffer("image/png");
-
 }
-
 
 module.exports = generateBalanceCard;
