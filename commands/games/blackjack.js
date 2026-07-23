@@ -210,3 +210,6 @@ module.exports = {
     }
 
 };
+const balanceService = require("../../services/balanceService");
+
+console.log(balanceService);
