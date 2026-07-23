@@ -1,3 +1,19 @@
-const activeGames = new Map();
+const games = new Map();
 
-module.exports = activeGames;
+function createGame(userId, data) {
+    games.set(userId, data);
+}
+
+function getGame(userId) {
+    return games.get(userId);
+}
+
+function deleteGame(userId) {
+    games.delete(userId);
+}
+
+module.exports = {
+    createGame,
+    getGame,
+    deleteGame
+};
