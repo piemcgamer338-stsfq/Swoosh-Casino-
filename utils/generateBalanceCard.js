@@ -9,7 +9,6 @@ async function generateBalanceCard(user, data) {
     const ctx = canvas.getContext("2d");
 
 
-    // Load background card
     const bgPath = path.join(
         process.cwd(),
         "assets",
@@ -18,9 +17,23 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    const bg = await loadImage(
-        fs.readFileSync(bgPath)
+    if (!fs.existsSync(bgPath)) {
+        throw new Error(
+            `Balance image missing: ${bgPath}`
+        );
+    }
+
+
+    const imageBuffer = fs.readFileSync(bgPath);
+
+
+    console.log(
+        "BALANCE IMAGE HEADER:",
+        imageBuffer.slice(0, 20).toString()
     );
+
+
+    const bg = await loadImage(imageBuffer);
 
 
     ctx.drawImage(
@@ -32,7 +45,6 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    // Username
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 42px Arial";
 
@@ -43,7 +55,6 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    // Balance
     ctx.fillStyle = "#FFD54F";
     ctx.font = "bold 82px Arial";
 
@@ -54,7 +65,6 @@ async function generateBalanceCard(user, data) {
     );
 
 
-    // Stats
     ctx.fillStyle = "#ffffff";
     ctx.font = "40px Arial";
 
