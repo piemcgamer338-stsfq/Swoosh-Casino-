@@ -20,7 +20,6 @@ module.exports = {
 
     async execute(message, args) {
 
-
         const bet = Number(args[0]);
         const mines = Number(args[1]);
 
@@ -53,20 +52,15 @@ module.exports = {
 
 
 
-        const minePositions = [];
+        const positions = Array.from(
+            { length: 25 },
+            (_, i) => i
+        );
 
 
-        while (minePositions.length < mines) {
-
-            const random =
-                Math.floor(Math.random() * 25);
-
-
-            if (!minePositions.includes(random)) {
-                minePositions.push(random);
-            }
-
-        }
+        const minePositions = positions
+            .sort(() => Math.random() - 0.5)
+            .slice(0, mines);
 
 
 
@@ -78,14 +72,15 @@ module.exports = {
         function getMultiplier() {
 
             const safe =
-                25 - mines;
+                opened.length;
+
+
+            let base =
+                1 + (mines * 0.08);
 
 
             return Number(
-                Math.pow(
-                    1.15,
-                    opened.length
-                ).toFixed(2)
+                (Math.pow(base, safe)).toFixed(2)
             );
 
         }
@@ -94,12 +89,15 @@ module.exports = {
 
 
 
-        function createGrid() {
+        function createBoard() {
+
 
             const rows = [];
 
 
+
             for (let r = 0; r < 5; r++) {
+
 
                 const row =
                     new ActionRowBuilder();
@@ -114,29 +112,25 @@ module.exports = {
 
 
 
-                    row.addComponents(
-
+                    let button =
                         new ButtonBuilder()
-
-                        .setCustomId(
-                            `mine_${index}`
-                        )
-
+                        .setCustomId(`mine_${index}`)
                         .setLabel(
                             opened.includes(index)
                             ? "💎"
                             : "⬜"
                         )
-
                         .setStyle(
                             opened.includes(index)
                             ? ButtonStyle.Success
                             : ButtonStyle.Secondary
-                        )
+                        );
 
-                    );
+
+                    row.addComponents(button);
 
                 }
+
 
 
                 rows.push(row);
@@ -145,29 +139,13 @@ module.exports = {
 
 
 
-            rows.push(
+            // Replace last button with cashout
+            rows[4].components[4] =
+                new ButtonBuilder()
+                .setCustomId("cashout")
+                .setLabel("💰")
+                .setStyle(ButtonStyle.Success);
 
-                new ActionRowBuilder()
-
-                .addComponents(
-
-                    new ButtonBuilder()
-
-                    .setCustomId(
-                        "mine_cashout"
-                    )
-
-                    .setLabel(
-                        "💰 CASHOUT"
-                    )
-
-                    .setStyle(
-                        ButtonStyle.Success
-                    )
-
-                )
-
-            );
 
 
             return rows;
@@ -182,40 +160,32 @@ module.exports = {
         const gameMessage =
             await message.reply({
 
-                embeds:[
+                embeds: [
 
                     new EmbedBuilder()
 
-                    .setTitle(
-                        "💣 Mines"
-                    )
+                    .setTitle("💣 Mines")
 
                     .setDescription(
-
                         [
-
-                        `👤 Player: <@${message.author.id}>`,
-                        `💰 Bet: **${format.formatUSD(bet)}**`,
-                        `💣 Mines: **${mines}**`,
-                        "",
-                        `📈 Multiplier: **1.00x**`,
-                        "",
-                        "Click tiles or cashout."
-
+                            `👤 Player: <@${message.author.id}>`,
+                            `💰 Bet: **${format.formatUSD(bet)}**`,
+                            `💣 Mines: **${mines}**`,
+                            "",
+                            `📈 Multiplier: **1.00x**`,
+                            "",
+                            "💎 Pick tiles or press 💰 to cashout"
                         ].join("\n")
-
                     )
 
                     .setColor("Gold")
 
                 ],
 
-
                 components:
-                createGrid()
+                createBoard()
 
             });
-
 
 
 
@@ -228,11 +198,9 @@ module.exports = {
                 componentType:
                 ComponentType.Button,
 
-                time:
-                120000
+                time:120000
 
             });
-
 
 
 
@@ -245,8 +213,7 @@ module.exports = {
 
 
                 if (
-                    interaction.user.id !==
-                    message.author.id
+                    interaction.user.id !== message.author.id
                 ) {
 
                     return interaction.reply({
@@ -262,7 +229,6 @@ module.exports = {
 
 
 
-
                 if (ended) return;
 
 
@@ -271,14 +237,11 @@ module.exports = {
 
 
                 if (
-                    interaction.customId ===
-                    "mine_cashout"
+                    interaction.customId === "cashout"
                 ) {
 
 
-
                     ended = true;
-
 
 
                     const multiplier =
@@ -313,18 +276,14 @@ module.exports = {
                             )
 
                             .setDescription(
-
                                 [
-
-                                `👤 Player: <@${message.author.id}>`,
-                                "",
-                                `📈 Multiplier: **${multiplier}x**`,
-                                `💰 Won: **${format.formatUSD(result.payout)}**`,
-                                "",
-                                `💳 Balance: **${format.formatUSD(user.balance)}**`
-
+                                    `👤 Player: <@${message.author.id}>`,
+                                    "",
+                                    `📈 Multiplier: **${multiplier}x**`,
+                                    `💰 Won: **${format.formatUSD(result.payout)}**`,
+                                    "",
+                                    `💳 Balance: **${format.formatUSD(user.balance)}**`
                                 ].join("\n")
-
                             )
 
                             .setColor("Green")
@@ -348,7 +307,6 @@ module.exports = {
 
 
 
-
                 const index =
                     Number(
                         interaction.customId.split("_")[1]
@@ -357,11 +315,9 @@ module.exports = {
 
 
 
-
                 if (
                     minePositions.includes(index)
                 ) {
-
 
 
                     ended = true;
@@ -382,18 +338,15 @@ module.exports = {
                             new EmbedBuilder()
 
                             .setTitle(
-                                "💥 Mine Hit!"
+                                "💥 BOOM!"
                             )
 
                             .setDescription(
-
                                 [
-
-                                `💣 You hit a mine.`,
-                                `💸 Lost: **${format.formatUSD(bet)}**`
-
+                                    `💣 Mine exploded!`,
+                                    "",
+                                    `💸 Lost: **${format.formatUSD(bet)}**`
                                 ].join("\n")
-
                             )
 
                             .setColor("Red")
@@ -431,7 +384,6 @@ module.exports = {
 
                     embeds:[
 
-
                         new EmbedBuilder()
 
                         .setTitle(
@@ -439,36 +391,33 @@ module.exports = {
                         )
 
                         .setDescription(
-
                             [
-
-                            `👤 Player: <@${message.author.id}>`,
-                            `💰 Bet: **${format.formatUSD(bet)}**`,
-                            `💣 Mines: **${mines}**`,
-                            "",
-                            `📈 Multiplier: **${multiplier}x**`,
-                            "",
-                            "Continue or cashout."
-
+                                `👤 Player: <@${message.author.id}>`,
+                                `💰 Bet: **${format.formatUSD(bet)}**`,
+                                `💣 Mines: **${mines}**`,
+                                "",
+                                `📈 Multiplier: **${multiplier}x**`,
+                                "",
+                                "Keep playing or cashout 💰"
                             ].join("\n")
-
                         )
 
                         .setColor("Green")
 
-
                     ],
 
                     components:
-                    createGrid()
+                    createBoard()
 
                 });
 
 
 
             }
-
         );
+
+
+
 
 
 
@@ -477,17 +426,15 @@ module.exports = {
             "end",
             async()=>{
 
-                if(!ended){
+                if (!ended) {
 
-                    try{
+                    try {
 
                         await gameMessage.edit({
-
                             components:[]
-
                         });
 
-                    }catch{}
+                    } catch {}
 
                 }
 
