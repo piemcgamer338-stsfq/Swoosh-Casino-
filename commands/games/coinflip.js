@@ -7,7 +7,7 @@ const {
 } = require("discord.js");
 
 const gameService = require("../../services/gameService");
-const balanceService = require("../../services/balanceService");
+const gameResultService = require("../../services/gameResultService");
 const userService = require("../../services/userService");
 const format = require("../../utils/format");
 
@@ -23,27 +23,11 @@ const TAIL_IMAGE =
 
 function flipCoin(choice) {
 
-    const patterns = [
-        "win",
-        "win",
-        "lose",
-        "win",
-        "lose",
-        "lose",
-        "win",
-        "lose",
-        "win",
-        "win"
-    ];
+    const win =
+        Math.random() < 0.5;
 
 
-    const outcome =
-        patterns[
-            Math.floor(Math.random() * patterns.length)
-        ];
-
-
-    if (outcome === "win") {
+    if (win) {
         return choice;
     }
 
@@ -63,14 +47,14 @@ module.exports = {
     aliases: ["cf"],
 
 
-    async execute(message,args) {
+
+    async execute(message, args) {
 
 
-        const bet =
-            Number(args[0]);
+        const bet = Number(args[0]);
 
 
-        if(!bet || bet <= 0) {
+        if (!bet || bet <= 0) {
 
             return message.reply(
                 "❌ Usage: `.cf <amount>`"
@@ -81,13 +65,14 @@ module.exports = {
 
 
         const check =
-            gameService.canBet(
+            await gameService.canBet(
                 message.author.id,
                 bet
             );
 
 
-        if(!check.success){
+
+        if (!check.success) {
 
             return message.reply(
                 `❌ ${check.message}`
@@ -97,42 +82,22 @@ module.exports = {
 
 
 
-        // REMOVE BET FIRST
-        balanceService.removeBalance(
-            message.author.id,
-            bet,
-            "coinflip_bet"
-        );
-
-
-
-
         const buttons =
             new ActionRowBuilder()
-
             .addComponents(
 
                 new ButtonBuilder()
-
                 .setCustomId("cf_heads")
-
                 .setLabel("🟡 HEADS")
-
                 .setStyle(ButtonStyle.Primary),
 
 
-
                 new ButtonBuilder()
-
                 .setCustomId("cf_tails")
-
                 .setLabel("⚪ TAILS")
-
                 .setStyle(ButtonStyle.Secondary)
 
             );
-
-
 
 
 
@@ -143,29 +108,15 @@ module.exports = {
 
                     new EmbedBuilder()
 
-                    .setAuthor({
-
-                        name:
-                        message.author.username,
-
-                        iconURL:
-                        message.author.displayAvatarURL()
-
-                    })
-
-                    .setTitle(
-                        "🪙 Coin Flip"
-                    )
+                    .setTitle("🪙 Coin Flip")
 
                     .setDescription(
-
                         [
                             `👤 Player: <@${message.author.id}>`,
                             `💰 Bet: **${format.formatUSD(bet)}**`,
                             "",
                             "Choose your side:"
                         ].join("\n")
-
                     )
 
                     .setColor("Gold")
@@ -180,13 +131,10 @@ module.exports = {
 
 
 
-
-
         const collector =
             gameMessage.createMessageComponentCollector({
 
-                componentType:
-                ComponentType.Button,
+                componentType: ComponentType.Button,
 
                 time:30000
 
@@ -194,41 +142,117 @@ module.exports = {
 
 
 
+        collector.on("collect", async interaction => {
 
 
-        collector.on(
-            "collect",
-            async interaction=>{
+            if (
+                interaction.user.id !== message.author.id
+            ) {
+
+                return interaction.reply({
+
+                    content:
+                    "❌ This is not your coinflip.",
+
+                    ephemeral:true
+
+                });
+
+            }
 
 
-                if(
-                    interaction.user.id !== message.author.id
-                ){
 
-                    return interaction.reply({
+            await interaction.deferUpdate();
 
-                        content:
-                        "❌ This is not your coinflip.",
 
-                        ephemeral:true
 
-                    });
+            const choice =
+                interaction.customId === "cf_heads"
+                ? "heads"
+                : "tails";
+
+
+
+            await gameMessage.edit({
+
+                embeds:[
+
+                    new EmbedBuilder()
+
+                    .setTitle("🪙 Coin Flip")
+
+                    .setDescription(
+                        "🔄 Coin is flipping..."
+                    )
+
+                    .setColor("Yellow")
+
+                ],
+
+                components:[]
+
+            });
+
+
+
+            setTimeout(async()=>{
+
+
+                const result =
+                    flipCoin(choice);
+
+
+
+                const won =
+                    result === choice;
+
+
+
+                let text;
+
+
+
+                if(won){
+
+
+                    const payout =
+                        await gameResultService.processWin(
+                            message.author.id,
+                            bet,
+                            2
+                        );
+
+
+                    text =
+                    [
+                        "🎉 **You Won!**",
+                        `💰 Profit: **${format.formatUSD(payout.payout - bet)}**`
+                    ].join("\n");
+
+
+                } else {
+
+
+                    await gameResultService.processLoss(
+                        message.author.id,
+                        bet
+                    );
+
+
+                    text =
+                    [
+                        "❌ **You Lost!**",
+                        `💸 Lost: **${format.formatUSD(bet)}**`
+                    ].join("\n");
 
                 }
 
 
 
-                await interaction.deferUpdate();
-
-
-
-
-                const choice =
-                    interaction.customId === "cf_heads"
-                    ? "heads"
-                    : "tails";
-
-
+                const user =
+                    await userService.getUser(
+                        message.author.id
+                    );
 
 
 
@@ -238,25 +262,33 @@ module.exports = {
 
                         new EmbedBuilder()
 
-                        .setAuthor({
-
-                            name:
-                            message.author.username,
-
-                            iconURL:
-                            message.author.displayAvatarURL()
-
-                        })
-
                         .setTitle(
-                            "🪙 Coin Flip"
+                            "🪙 Coin Flip Result"
                         )
 
                         .setDescription(
-                            "🔄 Coin is flipping..."
+
+                            [
+                                `👤 Player: <@${message.author.id}>`,
+                                "",
+                                `🪙 Landed on: **${result.toUpperCase()}**`,
+                                "",
+                                text,
+                                "",
+                                `💳 Balance: **${format.formatUSD(user.balance)}**`
+                            ].join("\n")
+
                         )
 
-                        .setColor("Yellow")
+                        .setImage(
+                            result === "heads"
+                            ? HEAD_IMAGE
+                            : TAIL_IMAGE
+                        )
+
+                        .setColor(
+                            won ? "Green" : "Red"
+                        )
 
                     ],
 
@@ -266,184 +298,28 @@ module.exports = {
 
 
 
+            },3000);
 
 
 
-                setTimeout(async()=>{
+            collector.stop();
 
 
-                    const result =
-                        flipCoin(choice);
+        });
 
 
 
-                    const won =
-                        result === choice;
+        collector.on("end", async()=>{
 
+            try {
 
+                await gameMessage.edit({
+                    components:[]
+                });
 
+            } catch {}
 
-                    let text;
-
-                    let payout = 0;
-
-
-
-                    if(won){
-
-
-                        payout =
-                            bet * 2;
-
-
-
-                        balanceService.addBalance(
-
-                            message.author.id,
-
-                            payout,
-
-                            "coinflip_win"
-
-                        );
-
-
-
-                        text =
-
-                        [
-                            "🎉 **You Won!**",
-
-                            `💰 Won: **${format.formatUSD(payout)}**`
-
-                        ].join("\n");
-
-
-
-                    } else {
-
-
-                        text =
-
-                        [
-                            "❌ **You Lost!**",
-
-                            `💸 Lost: **${format.formatUSD(bet)}**`
-
-                        ].join("\n");
-
-                    }
-
-
-
-
-
-
-                    const updated =
-                        userService.getUser(
-                            message.author.id
-                        );
-
-
-
-
-
-
-                    await gameMessage.edit({
-
-                        embeds:[
-
-                            new EmbedBuilder()
-
-                            .setAuthor({
-
-                                name:
-                                message.author.username,
-
-                                iconURL:
-                                message.author.displayAvatarURL()
-
-                            })
-
-
-                            .setTitle(
-                                "🪙 Coin Flip Result"
-                            )
-
-
-                            .setDescription(
-
-                                [
-
-                                `👤 Player: <@${message.author.id}>`,
-
-                                "",
-
-                                `🪙 Landed on: **${result.toUpperCase()}**`,
-
-                                "",
-
-                                text,
-
-                                "",
-
-                                `💳 Balance: **${format.formatUSD(updated.balance)}**`
-
-                                ].join("\n")
-
-                            )
-
-
-                            .setColor(
-                                won ? "Green" : "Red"
-                            )
-
-
-                            .setImage(
-
-                                result === "heads"
-                                ? HEAD_IMAGE
-                                : TAIL_IMAGE
-
-                            )
-
-                        ],
-
-                        components:[]
-
-                    });
-
-
-
-                },3000);
-
-
-
-                collector.stop();
-
-
-            }
-        );
-
-
-
-
-        collector.on(
-            "end",
-            async()=>{
-
-                try{
-
-                    await gameMessage.edit({
-
-                        components:[]
-
-                    });
-
-                }catch{}
-
-            }
-        );
+        });
 
 
     }
