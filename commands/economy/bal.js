@@ -6,25 +6,31 @@ module.exports = {
     aliases: ["balance", "b"],
 
     async execute(message) {
+
         const target =
             message.mentions.users.first() || message.author;
 
-        const user = userService.getUser(target.id);
+        const user =
+            await userService.getUser(target.id);
+
+        if (!user) {
+            return message.reply("❌ User not found.");
+        }
 
         return message.reply({
             embeds: [
                 embed.createEmbed(
                     `${target.username}'s Balance`,
                     [
-                        `💰 **Balance:** ${user.balance.toLocaleString()} Points`,
-                        `🏦 **Vault:** ${user.vault.toLocaleString()} Points`,
+                        `💰 **Balance:** ${(Number(user.balance) || 0).toLocaleString()} Points`,
+                        `🏦 **Vault:** ${(Number(user.vault) || 0).toLocaleString()} Points`,
                         ``,
-                        `📊 **Wagered:** ${user.wagered.toLocaleString()}`,
-                        `🏆 **Won:** ${user.won.toLocaleString()}`,
-                        `📉 **Lost:** ${user.lost.toLocaleString()}`,
+                        `📊 **Wagered:** ${(Number(user.wagered) || 0).toLocaleString()}`,
+                        `🏆 **Won:** ${(Number(user.won) || 0).toLocaleString()}`,
+                        `📉 **Lost:** ${(Number(user.lost) || 0).toLocaleString()}`,
                         ``,
-                        `⭐ **Level:** ${user.level}`,
-                        `✨ **XP:** ${user.xp}`
+                        `⭐ **Level:** ${Number(user.level) || 1}`,
+                        `✨ **XP:** ${Number(user.xp) || 0}`
                     ].join("\n")
                 )
             ]
