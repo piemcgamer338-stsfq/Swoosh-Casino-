@@ -7,7 +7,7 @@ const {
 } = require("discord.js");
 
 const gameService = require("../../services/gameService");
-const gameResultService = require("../../services/gameResultService");
+const balanceService = require("../../services/balanceService");
 const userService = require("../../services/userService");
 const format = require("../../utils/format");
 
@@ -26,7 +26,7 @@ module.exports = {
 
         if (!bet || !mines) {
             return message.reply(
-                "❌ Usage: `.mines <amount> <mines>`\nExample: `.mines 100 5`"
+                "❌ Usage: `.mines <amount> <mines>`"
             );
         }
 
@@ -52,15 +52,26 @@ module.exports = {
 
 
 
-        const positions = Array.from(
-            { length: 25 },
-            (_, i) => i
+        // LOCK BET
+        balanceService.removeBalance(
+            message.author.id,
+            bet,
+            "mines_bet"
         );
 
 
-        const minePositions = positions
-            .sort(() => Math.random() - 0.5)
-            .slice(0, mines);
+
+        const slots =
+            Array.from(
+                {length:25},
+                (_,i)=>i
+            );
+
+
+        const minePositions =
+            slots
+            .sort(()=>Math.random()-0.5)
+            .slice(0,mines);
 
 
 
@@ -69,18 +80,17 @@ module.exports = {
 
 
 
-        function getMultiplier() {
+        function multiplier(){
 
-            const safe =
-                opened.length;
-
-
-            let base =
-                1 + (mines * 0.08);
-
+            const safe = opened.length;
 
             return Number(
-                (Math.pow(base, safe)).toFixed(2)
+                (
+                    Math.pow(
+                        1 + mines * 0.08,
+                        safe
+                    )
+                ).toFixed(2)
             );
 
         }
@@ -88,49 +98,46 @@ module.exports = {
 
 
 
+        function board(){
 
-        function createBoard() {
-
-
-            const rows = [];
+            const rows=[];
 
 
-
-            for (let r = 0; r < 5; r++) {
-
+            for(let r=0;r<5;r++){
 
                 const row =
                     new ActionRowBuilder();
 
 
+                for(let c=0;c<5;c++){
 
-                for (let c = 0; c < 5; c++) {
-
-
-                    const index =
-                        r * 5 + c;
+                    const id =
+                        r*5+c;
 
 
+                    row.addComponents(
 
-                    let button =
                         new ButtonBuilder()
-                        .setCustomId(`mine_${index}`)
+
+                        .setCustomId(
+                            `mine_${id}`
+                        )
+
                         .setLabel(
-                            opened.includes(index)
+                            opened.includes(id)
                             ? "💎"
                             : "⬜"
                         )
+
                         .setStyle(
-                            opened.includes(index)
+                            opened.includes(id)
                             ? ButtonStyle.Success
                             : ButtonStyle.Secondary
-                        );
+                        )
 
-
-                    row.addComponents(button);
+                    );
 
                 }
-
 
 
                 rows.push(row);
@@ -138,14 +145,16 @@ module.exports = {
             }
 
 
-
-            // Replace last button with cashout
             rows[4].components[4] =
                 new ButtonBuilder()
-                .setCustomId("cashout")
-                .setLabel("💰")
-                .setStyle(ButtonStyle.Success);
 
+                .setCustomId("cashout")
+
+                .setLabel("💰")
+
+                .setStyle(
+                    ButtonStyle.Success
+                );
 
 
             return rows;
@@ -155,12 +164,10 @@ module.exports = {
 
 
 
-
-
         const gameMessage =
             await message.reply({
 
-                embeds: [
+                embeds:[
 
                     new EmbedBuilder()
 
@@ -172,9 +179,9 @@ module.exports = {
                             `💰 Bet: **${format.formatUSD(bet)}**`,
                             `💣 Mines: **${mines}**`,
                             "",
-                            `📈 Multiplier: **1.00x**`,
+                            "📈 Multiplier: **1.00x**",
                             "",
-                            "💎 Pick tiles or press 💰 to cashout"
+                            "💎 Find diamonds or cashout"
                         ].join("\n")
                     )
 
@@ -183,10 +190,9 @@ module.exports = {
                 ],
 
                 components:
-                createBoard()
+                board()
 
             });
-
 
 
 
@@ -206,20 +212,19 @@ module.exports = {
 
 
 
-
         collector.on(
             "collect",
-            async interaction => {
+            async interaction=>{
 
 
-                if (
+                if(
                     interaction.user.id !== message.author.id
-                ) {
+                ){
 
                     return interaction.reply({
 
                         content:
-                        "❌ This is not your game.",
+                        "❌ Not your game.",
 
                         ephemeral:true
 
@@ -229,32 +234,34 @@ module.exports = {
 
 
 
-                if (ended) return;
+                if(ended) return;
 
 
 
 
-
-
-                if (
+                if(
                     interaction.customId === "cashout"
-                ) {
+                ){
+
+                    ended=true;
 
 
-                    ended = true;
+                    const multi =
+                        multiplier();
 
 
-                    const multiplier =
-                        getMultiplier();
-
-
-
-                    const result =
-                        gameResultService.processWin(
-                            message.author.id,
-                            bet,
-                            multiplier
+                    const payout =
+                        Math.floor(
+                            bet * multi
                         );
+
+
+
+                    balanceService.addBalance(
+                        message.author.id,
+                        payout,
+                        "mines_cashout"
+                    );
 
 
 
@@ -279,8 +286,8 @@ module.exports = {
                                 [
                                     `👤 Player: <@${message.author.id}>`,
                                     "",
-                                    `📈 Multiplier: **${multiplier}x**`,
-                                    `💰 Won: **${format.formatUSD(result.payout)}**`,
+                                    `📈 Multiplier: **${multi}x**`,
+                                    `💰 Won: **${format.formatUSD(payout)}**`,
                                     "",
                                     `💳 Balance: **${format.formatUSD(user.balance)}**`
                                 ].join("\n")
@@ -295,14 +302,11 @@ module.exports = {
                     });
 
 
-
                     collector.stop();
 
                     return;
 
                 }
-
-
 
 
 
@@ -315,19 +319,11 @@ module.exports = {
 
 
 
-                if (
+                if(
                     minePositions.includes(index)
-                ) {
+                ){
 
-
-                    ended = true;
-
-
-
-                    gameResultService.processLoss(
-                        message.author.id,
-                        bet
-                    );
+                    ended=true;
 
 
 
@@ -343,7 +339,7 @@ module.exports = {
 
                             .setDescription(
                                 [
-                                    `💣 Mine exploded!`,
+                                    `💣 Mine hit!`,
                                     "",
                                     `💸 Lost: **${format.formatUSD(bet)}**`
                                 ].join("\n")
@@ -358,7 +354,6 @@ module.exports = {
                     });
 
 
-
                     collector.stop();
 
                     return;
@@ -369,14 +364,12 @@ module.exports = {
 
 
 
-
                 opened.push(index);
 
 
 
-                const multiplier =
-                    getMultiplier();
-
+                const multi =
+                    multiplier();
 
 
 
@@ -393,12 +386,11 @@ module.exports = {
                         .setDescription(
                             [
                                 `👤 Player: <@${message.author.id}>`,
-                                `💰 Bet: **${format.formatUSD(bet)}**`,
+                                "",
                                 `💣 Mines: **${mines}**`,
+                                `📈 Multiplier: **${multi}x**`,
                                 "",
-                                `📈 Multiplier: **${multiplier}x**`,
-                                "",
-                                "Keep playing or cashout 💰"
+                                "Keep going or cashout 💰"
                             ].join("\n")
                         )
 
@@ -407,41 +399,13 @@ module.exports = {
                     ],
 
                     components:
-                    createBoard()
+                    board()
 
                 });
 
 
-
             }
         );
-
-
-
-
-
-
-
-        collector.on(
-            "end",
-            async()=>{
-
-                if (!ended) {
-
-                    try {
-
-                        await gameMessage.edit({
-                            components:[]
-                        });
-
-                    } catch {}
-
-                }
-
-            }
-        );
-
-
 
     }
 
