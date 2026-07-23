@@ -16,15 +16,78 @@ const {
 
 
 
+function generateCrash(){
+
+
+    const roll =
+        Math.random();
+
+
+    let crash;
+
+
+
+    if(roll < 0.55){
+
+        // common crashes
+        crash =
+            1 +
+            Math.random() * 2;
+
+
+    }
+
+    else if(roll < 0.85){
+
+        // medium
+        crash =
+            2 +
+            Math.random() * 8;
+
+
+    }
+
+    else if(roll < 0.98){
+
+        // rare
+        crash =
+            10 +
+            Math.random() * 40;
+
+
+    }
+
+    else{
+
+        // jackpot
+        crash =
+            50 +
+            Math.random() * 50;
+
+    }
+
+
+
+    return Number(
+        crash.toFixed(2)
+    );
+
+}
+
+
+
+
+
 module.exports = {
 
-    name: "limbo",
 
-    aliases: ["rocket"],
+    name:"limbo",
+
+    aliases:["rocket"],
 
 
 
-    async execute(message, args) {
+    async execute(message,args){
 
 
 
@@ -37,12 +100,11 @@ module.exports = {
 
 
 
-        if (
+        if(
             !bet ||
             bet <= 0 ||
-            !target ||
-            target < 1.1
-        ) {
+            !target
+        ){
 
             return message.reply(
                 "❌ Usage: `.limbo <bet> <multiplier>`\nExample: `.limbo 10 2`"
@@ -52,12 +114,21 @@ module.exports = {
 
 
 
-        // max payout multiplier
 
-        if(target > 5){
+        if(target < 1.1){
 
             return message.reply(
-                "❌ Maximum multiplier is **5x**."
+                "❌ Minimum multiplier is 1.10x"
+            );
+
+        }
+
+
+
+        if(target > 100){
+
+            return message.reply(
+                "❌ Maximum multiplier is 100x"
             );
 
         }
@@ -65,7 +136,7 @@ module.exports = {
 
 
 
-        const balance =
+        const canPlay =
             await hasBalance(
                 message.author.id,
                 bet
@@ -73,7 +144,7 @@ module.exports = {
 
 
 
-        if(!balance){
+        if(!canPlay){
 
             return message.reply(
                 "❌ You don't have enough balance."
@@ -95,13 +166,13 @@ module.exports = {
 
 
         const loading =
-            await message.reply(
-            {
+            await message.reply({
+
                 embeds:[
 
                     new EmbedBuilder()
 
-                    .setColor("#f1c40f")
+                    .setColor("#f39c12")
 
                     .setTitle("🚀 Limbo")
 
@@ -120,91 +191,39 @@ module.exports = {
                     )
 
                 ]
+
             });
 
 
 
 
-        // casino delay
+
 
         await new Promise(
-            r => setTimeout(r,3000)
+            resolve =>
+            setTimeout(resolve,3000)
         );
 
 
 
 
 
-        let crash;
-
-
-
-        /*
-            Low target trap
-
-            Example:
-            1.5x / 1.8x
-
-            50% chance crash early
-        */
-
-
-        if(
-            target < 2 &&
-            Math.random() < 0.5
-        ){
-
-
-            crash =
-                Number(
-                    (
-                        Math.random()
-                        *
-                        1.8
-                        +
-                        1
-                    )
-                    .toFixed(2)
-                );
-
-
-        }
-
-        else {
-
-
-            crash =
-                Number(
-                    (
-                        Math.random()
-                        *
-                        100
-                        +
-                        1
-                    )
-                    .toFixed(2)
-                );
-
-
-        }
+        const crash =
+            generateCrash();
 
 
 
 
-        let win = false;
 
+        const win =
+            crash >= target;
 
-
-        if(crash >= target){
-
-            win = true;
-
-        }
 
 
 
 
         let payout = 0;
+
 
 
 
@@ -217,6 +236,7 @@ module.exports = {
                 );
 
 
+
             await addBalance(
 
                 message.author.id,
@@ -226,6 +246,7 @@ module.exports = {
                 "limbo_win"
 
             );
+
 
         }
 
@@ -254,6 +275,8 @@ module.exports = {
 
 
 
+
+
         const embed =
             new EmbedBuilder()
 
@@ -265,30 +288,41 @@ module.exports = {
                 "#e74c3c"
             )
 
+
             .setTitle(
                 "🚀 Limbo Result"
             )
 
+
             .setDescription(
+
                 win
+
                 ?
+
 `
-🏆 **You Won!**
+🏆 **YOU WON**
 
 💰 Payout:
 **${payout} Points**
 `
-                :
-`
-💀 **You Lost!**
 
-Better luck next time.
+                :
+
 `
+💀 **YOU LOST**
+
+Rocket crashed too early.
+`
+
             )
+
 
             .setImage(
                 "attachment://limbo-result.png"
             );
+
+
 
 
 
@@ -309,5 +343,6 @@ Better luck next time.
 
 
     }
+
 
 };
