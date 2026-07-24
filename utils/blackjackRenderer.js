@@ -12,13 +12,42 @@ const path = require("path");
 
 
 
+function getCardFile(card) {
+
+    if (!card) return null;
+
+
+    // New format
+    if (card.image)
+        return card.image;
+
+
+
+    // Backup if old cards exist
+    if (card.suit && card.value)
+        return `${card.suit}${card.value}.png`;
+
+
+
+    return null;
+
+}
+
+
+
+
 async function drawCard(ctx, card, x, y) {
 
 
-    if (!card || !card.image) {
+    const file =
+        getCardFile(card);
+
+
+
+    if (!file) {
 
         console.log(
-            "CARD IMAGE MISSING:",
+            "Invalid card:",
             card
         );
 
@@ -28,40 +57,28 @@ async function drawCard(ctx, card, x, y) {
 
 
 
-    const filePath =
+    const imagePath =
         path.join(
-
             process.cwd(),
-
             "assets",
-
             "blackjack",
-
-            card.image
-
+            file
         );
 
 
 
     const img =
-        await loadImage(filePath);
+        await loadImage(imagePath);
 
 
 
     ctx.drawImage(
-
         img,
-
         x,
-
         y,
-
         100,
-
         140
-
     );
-
 
 }
 
@@ -87,76 +104,60 @@ async function gameEmbed(
 
 
 
-    const table =
-        await loadImage(
-
-            path.join(
-
-                process.cwd(),
-
-                "assets",
-
-                "blackjack",
-
-                "table.png"
-
-            )
-
+    const tablePath =
+        path.join(
+            process.cwd(),
+            "assets",
+            "blackjack",
+            "table.png"
         );
 
 
 
+    const table =
+        await loadImage(tablePath);
+
+
+
     ctx.drawImage(
-
         table,
-
         0,
-
         0,
-
         900,
-
         500
-
     );
 
 
 
 
 
-    // DEALER CARDS
+    // Dealer
 
     let dealerX = 300;
 
 
 
-    for (
+    for(
         let i = 0;
         i < game.dealer.length;
         i++
-    ) {
+    ){
 
 
-
-        if (
+        if(
             i === 0 &&
             !revealDealer
-        ) {
+        ){
 
 
             const back =
                 await loadImage(
 
                     path.join(
-
                         process.cwd(),
-
                         "assets",
-
                         "blackjack",
-
                         "BACK.png"
-
                     )
 
                 );
@@ -164,43 +165,30 @@ async function gameEmbed(
 
 
             ctx.drawImage(
-
                 back,
-
                 dealerX,
-
                 60,
-
                 100,
-
                 140
-
             );
 
 
-
-        } else {
+        }
+        else{
 
 
             await drawCard(
-
                 ctx,
-
                 game.dealer[i],
-
                 dealerX,
-
                 60
-
             );
 
 
         }
 
 
-
         dealerX += 110;
-
 
     }
 
@@ -210,32 +198,26 @@ async function gameEmbed(
 
 
 
-    // PLAYER CARDS
+    // Player
 
     let playerX = 300;
 
 
 
-    for (
+    for(
         const card of game.player
-    ) {
+    ){
 
 
         await drawCard(
-
             ctx,
-
             card,
-
             playerX,
-
             300
-
         );
 
 
         playerX += 110;
-
 
     }
 
@@ -244,8 +226,6 @@ async function gameEmbed(
 
 
 
-
-    // TEXT
 
     ctx.font =
         "bold 30px Arial";
@@ -257,30 +237,10 @@ async function gameEmbed(
 
 
     ctx.fillText(
-
         `BET: ${game.bet}`,
-
         40,
-
         50
-
     );
-
-
-
-    ctx.fillText(
-
-        `PLAYER: ${game.player.length} CARDS`,
-
-        40,
-
-        450
-
-    );
-
-
-
-
 
 
 
@@ -293,33 +253,22 @@ async function gameEmbed(
 
     const attachment =
         new AttachmentBuilder(
-
             buffer,
-
             {
                 name:
                 "blackjack.png"
             }
-
         );
-
-
 
 
 
     const embed =
         new EmbedBuilder()
-
         .setColor("#008000")
-
-        .setTitle(
-            "🃏 Blackjack"
-        )
-
+        .setTitle("🃏 Blackjack")
         .setImage(
             "attachment://blackjack.png"
         );
-
 
 
 
@@ -335,13 +284,10 @@ async function gameEmbed(
 
     };
 
-
 }
 
 
 
 module.exports = {
-
     gameEmbed
-
 };
