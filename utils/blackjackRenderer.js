@@ -1,5 +1,3 @@
-// utils/blackjackRenderer.js
-
 const {
     EmbedBuilder,
     AttachmentBuilder
@@ -8,48 +6,50 @@ const {
 const path = require("path");
 
 
-function getCardName(card) {
-
-    if (typeof card === "string") {
-        return card;
-    }
+function getCardCode(card) {
 
 
-    if (card.name) {
-        return card.name;
-    }
+    const suits = {
+
+        "♣": "C",
+        "♦": "D",
+        "♥": "H",
+        "♠": "S"
+
+    };
 
 
-    if (card.code) {
-        return card.code;
-    }
-
-
-    if (card.rank && card.suit) {
-
-        return `${card.suit}${card.rank}`;
-
-    }
-
-
-    return "UNKNOWN";
-
-}
-
-
-
-function cardPath(card) {
-
-    const name = getCardName(card);
-
-    return path.join(
-        process.cwd(),
-        "assets",
-        "blackjack",
-        `${name}.png`
+    return (
+        suits[card.suit] +
+        card.value
     );
 
 }
+
+
+
+function getCardPath(card) {
+
+
+    const code =
+        getCardCode(card);
+
+
+    return path.join(
+
+        process.cwd(),
+
+        "assets",
+
+        "blackjack",
+
+        `${code}.png`
+
+    );
+
+}
+
+
 
 
 
@@ -58,55 +58,89 @@ function gameEmbed(game, revealDealer = false) {
 
     const files = [];
 
-    const playerCards = [];
-    const dealerCards = [];
+
+    const playerImages = [];
+
+    const dealerImages = [];
 
 
+
+    // PLAYER CARDS
 
     for (const card of game.player) {
 
-        const name = getCardName(card);
+
+        const code =
+            getCardCode(card);
+
 
 
         files.push(
+
             new AttachmentBuilder(
-                cardPath(card),
+
+                getCardPath(card),
+
                 {
-                    name:`${name}.png`
+                    name:
+                    `${code}.png`
                 }
+
             )
+
         );
 
 
-        playerCards.push(
-            `attachment://${name}.png`
+
+        playerImages.push(
+
+            `attachment://${code}.png`
+
         );
+
 
     }
 
 
+
+
+
+    // DEALER CARDS
 
     if (revealDealer) {
 
 
         for (const card of game.dealer) {
 
-            const name = getCardName(card);
+
+            const code =
+                getCardCode(card);
+
 
 
             files.push(
+
                 new AttachmentBuilder(
-                    cardPath(card),
+
+                    getCardPath(card),
+
                     {
-                        name:`${name}.png`
+                        name:
+                        `${code}.png`
                     }
+
                 )
+
             );
 
 
-            dealerCards.push(
-                `attachment://${name}.png`
+
+            dealerImages.push(
+
+                `attachment://${code}.png`
+
             );
+
 
         }
 
@@ -119,14 +153,20 @@ function gameEmbed(game, revealDealer = false) {
             new AttachmentBuilder(
 
                 path.join(
+
                     process.cwd(),
+
                     "assets",
+
                     "blackjack",
+
                     "BACK.png"
+
                 ),
 
                 {
-                    name:"BACK.png"
+                    name:
+                    "BACK.png"
                 }
 
             )
@@ -134,30 +174,45 @@ function gameEmbed(game, revealDealer = false) {
         );
 
 
-        dealerCards.push(
+
+        dealerImages.push(
+
             "attachment://BACK.png"
+
         );
 
 
 
         const second =
-        getCardName(game.dealer[1]);
+            getCardCode(
+                game.dealer[1]
+            );
+
 
 
         files.push(
 
             new AttachmentBuilder(
-                cardPath(game.dealer[1]),
+
+                getCardPath(
+                    game.dealer[1]
+                ),
+
                 {
-                    name:`${second}.png`
+                    name:
+                    `${second}.png`
                 }
+
             )
 
         );
 
 
-        dealerCards.push(
+
+        dealerImages.push(
+
             `attachment://${second}.png`
+
         );
 
     }
@@ -165,40 +220,42 @@ function gameEmbed(game, revealDealer = false) {
 
 
 
-    const embed = new EmbedBuilder()
 
-        .setColor("#0b6623")
+    const embed =
+        new EmbedBuilder()
+
+        .setColor("#075e28")
 
         .setTitle(
             "🃏 Blackjack"
         )
 
-
         .addFields(
 
             {
-                name:"Dealer",
+                name:
+                "Dealer",
 
                 value:
-                dealerCards.join("\n")
-
+                dealerImages.join(" ")
             },
 
 
             {
-                name:"Player",
+                name:
+                "Player",
 
                 value:
-                playerCards.join("\n")
-
+                playerImages.join(" ")
             }
 
         )
 
-
         .setFooter({
+
             text:
             `Bet: ${game.bet} Points`
+
         });
 
 
@@ -218,5 +275,7 @@ function gameEmbed(game, revealDealer = false) {
 
 
 module.exports = {
+
     gameEmbed
+
 };
