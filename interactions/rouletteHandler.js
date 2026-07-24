@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 
-const User = require("../models/User");
+const balanceService = require("../services/balanceService");
 
 const {
     addBet,
@@ -11,7 +11,7 @@ const {
     payout
 } = require("../utils/rouletteHandler");
 
-async function select(interaction, betType) {
+async function select(interaction, bet) {
 
     const game = getRoulette(interaction.user.id);
 
@@ -22,31 +22,23 @@ async function select(interaction, betType) {
         });
     }
 
-    addBet(interaction.user.id, betType);
+    addBet(interaction.user.id, bet);
 
-    await interaction.update({
-
+    return interaction.update({
         embeds: [
-
             new EmbedBuilder()
-                .setColor("#c0392b")
+                .setColor("Red")
                 .setTitle("🎰 Roulette")
                 .setDescription(
-`# Place your bets
-
-💰 Bet Per Selection
-**${game.amount}**
+`Bet Per Selection: **${game.amount}**
 
 Selected Bets:
-${game.bets.length ? game.bets.join(", ") : "None"}
+${game.bets.join(", ")}
 
 Press **START** when ready.`
                 )
-
         ],
-
         components: interaction.message.components
-
     });
 
 }
@@ -64,7 +56,7 @@ async function start(interaction) {
 
     await interaction.deferUpdate();
 
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(r => setTimeout(r, 5000));
 
     const number = spinRoulette();
 
@@ -78,40 +70,35 @@ async function start(interaction) {
 
     }
 
-    const user = await User.findOne({
-        discordId: interaction.user.id
-    });
-
-    if (user) {
-        user.balance += winnings;
-        await user.save();
+    if (winnings > 0) {
+        await balanceService.addBalance(
+            interaction.user.id,
+            winnings,
+            "roulette_win"
+        );
     }
 
     clearRoulette(interaction.user.id);
 
     const embed = new EmbedBuilder()
-        .setColor(winnings > 0 ? "#2ecc71" : "#e74c3c")
+        .setColor(winnings ? "Green" : "Red")
         .setTitle("🎰 Roulette Result")
         .setDescription(
-`# 🎲 ${number}
+`# ${number}
 
 Bet Per Selection: **${game.amount}**
 
 Selections:
 ${game.bets.join(", ")}
 
-${winnings > 0
-    ? `🎉 You won **${winnings}**`
-    : `💀 You lost **${game.amount * game.bets.length}**`
-}`
+${winnings
+? `✅ Won **${winnings}**`
+: `❌ Lost **${game.amount * game.bets.length}**`}`
         );
 
-    await interaction.editReply({
-
+    return interaction.editReply({
         embeds: [embed],
-
         components: []
-
     });
 
 }
