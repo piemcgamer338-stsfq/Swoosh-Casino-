@@ -1,9 +1,9 @@
-const { handleRoulette } = require("./rouletteHandler");
+const roulette = require("./rouletteHandler");
 
 module.exports = {
     customId: "roulette_col2",
 
     async execute(interaction) {
-        return handleRoulette(interaction, "Column 2");
+        return roulette.select(interaction, "col2");
     }
 };
