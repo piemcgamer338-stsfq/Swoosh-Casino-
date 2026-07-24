@@ -1,124 +1,198 @@
 const crypto = require("crypto");
 
+
 const affiliates = new Map();
+const referrals = new Map();
 
 
-async function createAffiliate(userId) {
 
-    if (affiliates.has(userId)) {
+function generateCode() {
 
-        return {
-            success:false,
-            message:"You already have an affiliate code."
+    return crypto
+        .randomBytes(3)
+        .toString("hex")
+        .toUpperCase();
+
+}
+
+
+
+async function getOrCreateAffiliate(userId) {
+
+
+    let affiliate = affiliates.get(userId);
+
+
+    if (!affiliate) {
+
+        affiliate = {
+
+            userId,
+
+            code: generateCode(),
+
+            referrals: 0
+
         };
+
+
+        affiliates.set(
+            userId,
+            affiliate
+        );
 
     }
 
 
-    const code =
-        crypto.randomBytes(3)
-        .toString("hex")
-        .toUpperCase();
-
-
-    affiliates.set(userId, {
-
-        userId,
-        code,
-        referrals:0
-
-    });
-
-
-    return {
-
-        success:true,
-        code
-
-    };
+    return affiliate;
 
 }
+
 
 
 
 async function getAffiliate(userId) {
 
-    const data =
+
+    const affiliate =
         affiliates.get(userId);
 
 
-    if(!data)
+    if (!affiliate)
         return null;
 
 
-    return {
-
-        code:data.code,
-        referrals:data.referrals
-
-    };
+    return affiliate;
 
 }
+
+
 
 
 
 async function redeemCode(userId, code) {
 
 
-    for(const affiliate of affiliates.values()) {
+    // already used any affiliate
+    if (referrals.has(userId)) {
+
+        return {
+
+            success:false,
+
+            message:
+            "You already used an affiliate code."
+
+        };
+
+    }
 
 
-        if(
-            affiliate.code === code
+
+    let owner = null;
+
+
+    for (const aff of affiliates.values()) {
+
+
+        if (
+            aff.code.toLowerCase()
+            === code.toLowerCase()
         ) {
 
+            owner = aff;
 
-            if(
-                affiliate.userId === userId
-            ) {
-
-                return {
-
-                    success:false,
-                    message:"You cannot use your own code."
-
-                };
-
-            }
-
-
-
-            affiliate.referrals++;
-
-
-            return {
-
-                success:true,
-
-                owner:affiliate
-
-            };
+            break;
 
         }
 
     }
 
 
+
+    if (!owner) {
+
+        return {
+
+            success:false,
+
+            message:
+            "Invalid affiliate code."
+
+        };
+
+    }
+
+
+
+    if (owner.userId === userId) {
+
+        return {
+
+            success:false,
+
+            message:
+            "You cannot use your own affiliate code."
+
+        };
+
+    }
+
+
+
+    referrals.set(
+        userId,
+        owner.userId
+    );
+
+
+    owner.referrals++;
+
+
+
     return {
 
-        success:false,
-        message:"Invalid affiliate code."
+        success:true,
+
+        owner
 
     };
+
 
 }
 
 
 
+
+
+async function addReferralReward(ownerId) {
+
+    const owner =
+        affiliates.get(ownerId);
+
+
+    if (!owner)
+        return false;
+
+
+    owner.referrals++;
+
+
+    return true;
+
+}
+
+
+
+
 module.exports = {
 
-    createAffiliate,
+    getOrCreateAffiliate,
+
     getAffiliate,
-    redeemCode
+
+    redeemCode,
+
+    addReferralReward
 
 };
