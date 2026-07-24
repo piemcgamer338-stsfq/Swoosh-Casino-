@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
+
 const User = require("../models/User");
 
 const {
@@ -10,92 +11,106 @@ const {
     payout
 } = require("../utils/rouletteHandler");
 
-async function select(interaction, bet){
+async function select(interaction, betType) {
 
     const game = getRoulette(interaction.user.id);
 
-    if(!game)
+    if (!game) {
         return interaction.reply({
-            content:"No roulette running.",
-            ephemeral:true
+            content: "❌ No roulette game running.",
+            ephemeral: true
         });
+    }
 
-    addBet(interaction.user.id, bet);
+    addBet(interaction.user.id, betType);
 
-    return interaction.update({
-        embeds:[
+    await interaction.update({
+
+        embeds: [
+
             new EmbedBuilder()
-            .setColor("Red")
-            .setTitle("🎰 Roulette")
-            .setDescription(
-`Bet: **${game.amount}**
+                .setColor("#c0392b")
+                .setTitle("🎰 Roulette")
+                .setDescription(
+`# Place your bets
 
-Selected:
-${game.bets.join(", ")}
+💰 Bet Per Selection
+**${game.amount}**
 
-Press **START**`
-            )
+Selected Bets:
+${game.bets.length ? game.bets.join(", ") : "None"}
+
+Press **START** when ready.`
+                )
+
         ],
+
         components: interaction.message.components
+
     });
 
 }
 
-async function start(interaction){
+async function start(interaction) {
 
     const game = getRoulette(interaction.user.id);
 
-    if(!game)
+    if (!game) {
         return interaction.reply({
-            content:"No roulette running.",
-            ephemeral:true
+            content: "❌ No roulette game running.",
+            ephemeral: true
         });
+    }
 
     await interaction.deferUpdate();
 
-    await new Promise(r=>setTimeout(r,5000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     const number = spinRoulette();
 
-    let won = 0;
+    let winnings = 0;
 
-    for(const bet of game.bets){
+    for (const bet of game.bets) {
 
-        if(checkWin(number,bet))
-            won += game.amount*payout(bet);
+        if (checkWin(number, bet)) {
+            winnings += game.amount * payout(bet);
+        }
 
     }
 
     const user = await User.findOne({
-        discordId:interaction.user.id
+        discordId: interaction.user.id
     });
 
-    if(user){
-        user.balance += won;
+    if (user) {
+        user.balance += winnings;
         await user.save();
     }
 
     clearRoulette(interaction.user.id);
 
-    return interaction.editReply({
+    const embed = new EmbedBuilder()
+        .setColor(winnings > 0 ? "#2ecc71" : "#e74c3c")
+        .setTitle("🎰 Roulette Result")
+        .setDescription(
+`# 🎲 ${number}
 
-        embeds:[
-            new EmbedBuilder()
-            .setColor(won ? "Green":"Red")
-            .setTitle("🎰 Roulette")
-            .setDescription(
-`# ${number}
+Bet Per Selection: **${game.amount}**
 
-Bet: ${game.amount}
-
-Bets:
+Selections:
 ${game.bets.join(", ")}
 
-${won ? `✅ Won ${won}`:`❌ Lost ${game.amount*game.bets.length}`}`
-            )
-        ],
+${winnings > 0
+    ? `🎉 You won **${winnings}**`
+    : `💀 You lost **${game.amount * game.bets.length}**`
+}`
+        );
 
-        components:[]
+    await interaction.editReply({
+
+        embeds: [embed],
+
+        components: []
 
     });
 
