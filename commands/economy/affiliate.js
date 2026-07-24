@@ -1,54 +1,96 @@
+const {
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
+} = require("discord.js");
+
 const affiliateService = require("../../services/affiliateService");
-const balanceService = require("../../services/balanceService");
 
 
 module.exports = {
 
     name: "affiliate",
-    aliases: ["affcode"],
+    aliases: ["affiliatecode"],
 
 
     async execute(message) {
 
 
-        const result =
-            await affiliateService.createAffiliate(
+        const affiliate =
+            await affiliateService.getOrCreateAffiliate(
                 message.author.id
             );
 
 
-        if (!result.success) {
+        const embed = new EmbedBuilder()
 
-            return message.reply(
-                `❌ ${result.message}`
-            );
+            .setColor("#FFD700")
 
-        }
+            .setTitle("💎 Affiliate Program")
 
-
-        return message.reply(
+            .setDescription(
 `
-# 💎 Your Affiliate Code Created
-
-Your Code:
+# Your Affiliate Code
 
 \`\`\`
-${result.code}
+${affiliate.code}
 \`\`\`
 
-Give this code to your friends.
+Share this code with your friends.
 
-Rewards:
+## Rewards
 
 👤 Friend joins:
-> They get **4 Points**
+> +4 Points
 
 💰 You earn:
-> **5 Points**
+> +5 Points per referral
 
-Your code can be used by unlimited players.
+🔥 Passive income forever.
 `
-        );
+            )
+
+            .setFooter({
+                text:
+                "Affiliate System"
+            });
+
+
+
+        const button =
+            new ActionRowBuilder()
+            .addComponents(
+
+                new ButtonBuilder()
+
+                .setCustomId(
+                    `affiliate_copy_${affiliate.code}`
+                )
+
+                .setLabel(
+                    "📋 Copy Code"
+                )
+
+                .setStyle(
+                    ButtonStyle.Primary
+                )
+
+            );
+
+
+
+        return message.reply({
+
+            embeds:[
+                embed
+            ],
+
+            components:[
+                button
+            ]
+
+        });
 
 
     }
