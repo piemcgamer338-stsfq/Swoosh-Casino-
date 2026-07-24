@@ -1,31 +1,33 @@
 module.exports = {
 
-    id: "affiliate_copy",
+    name: "affiliate_copy",
+
 
     async execute(interaction) {
 
-        const affiliateService =
-            require("../services/affiliateService");
 
-        const affiliate =
-            await affiliateService.getAffiliate(
-                interaction.user.id
+        const code =
+            interaction.customId
+            .replace(
+                "affiliate_copy_",
+                ""
             );
+
+
 
         return interaction.reply({
 
             content:
-`📋 Your referral code
+            `📋 Your affiliate code:
 
-**${affiliate.affiliateCode}**
+\`${code}\`
 
-Your friends can redeem it using:
+Copy it and share it with your friends!`,
 
-\`.aff ${affiliate.affiliateCode}\``,
-
-            ephemeral: true
+            ephemeral:true
 
         });
+
 
     }
 
