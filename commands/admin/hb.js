@@ -10,15 +10,17 @@ module.exports = {
 
         if (message.author.id !== config.ownerId) return;
 
-        const house = db.prepare(
+        const result = await db.query(
             "SELECT balance FROM house WHERE id = 1"
-        ).get();
+        );
+
+        const house = result.rows[0];
 
         return message.reply({
             embeds: [
                 embed.createEmbed(
                     "House Balance",
-                    `🏦 **${house.balance.toLocaleString()} Points**`
+                    `🏦 **${Number(house.balance).toLocaleString()} Points**`
                 )
             ]
         });
