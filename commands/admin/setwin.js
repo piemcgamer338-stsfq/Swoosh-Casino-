@@ -1,20 +1,24 @@
-const Settings = require("../../models/Settings");
+const settingsService = require("../../services/settingsService");
 
 
 module.exports = {
 
-    name:"setwin",
+    name: "setwin",
 
-    aliases:[],
-
-
-    async execute(message,args){
+    aliases: [],
 
 
-        if(!message.member.permissions.has("Administrator"))
+    async execute(message, args) {
+
+
+        // Admin check
+        if (!message.member.permissions.has("Administrator")) {
+
             return message.reply(
-                "❌ Admin only."
+                "❌ You need Administrator permission."
             );
+
+        }
 
 
 
@@ -23,27 +27,29 @@ module.exports = {
 
 
 
-        if(!channel)
+        if (!channel) {
+
             return message.reply(
                 "❌ Usage: `.setwin #channel`"
             );
 
+        }
 
 
-        await Settings.upsert({
 
-            key:"winner_channel",
-
-            value:channel.id
-
-        });
+        await settingsService.setWinChannel(
+            message.guild.id,
+            channel.id
+        );
 
 
 
         return message.reply(
-`✅ Winner channel set!
+`
+✅ Winner channel updated!
 
-🏆 Winners will now be announced in ${channel}.`
+🏆 Winning messages will now be sent in ${channel}.
+`
         );
 
 
