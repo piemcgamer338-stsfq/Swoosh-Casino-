@@ -1,223 +1,215 @@
 const {
-    EmbedBuilder,
-    AttachmentBuilder
+    AttachmentBuilder,
+    EmbedBuilder
 } = require("discord.js");
 
+const Canvas = require("canvas");
 const path = require("path");
 
 
 function getCardCode(card) {
 
-
     const suits = {
-
-        "♣": "C",
-        "♦": "D",
-        "♥": "H",
-        "♠": "S"
-
+        "♣":"C",
+        "♦":"D",
+        "♥":"H",
+        "♠":"S"
     };
 
+    return suits[card.suit] + card.value;
 
-    return (
-        suits[card.suit] +
-        card.value
+}
+
+
+
+async function drawCard(ctx, card, x, y) {
+
+    const code = getCardCode(card);
+
+    const img = await Canvas.loadImage(
+
+        path.join(
+            process.cwd(),
+            "assets",
+            "blackjack",
+            `${code}.png`
+        )
+
+    );
+
+
+    ctx.drawImage(
+        img,
+        x,
+        y,
+        100,
+        140
     );
 
 }
 
 
 
-function getCardPath(card) {
+
+async function gameEmbed(game, revealDealer=false) {
 
 
-    const code =
-        getCardCode(card);
+    const canvas =
+        Canvas.createCanvas(
+            900,
+            500
+        );
 
 
-    return path.join(
-
-        process.cwd(),
-
-        "assets",
-
-        "blackjack",
-
-        `${code}.png`
-
-    );
-
-}
+    const ctx =
+        canvas.getContext("2d");
 
 
 
+    const table =
+        await Canvas.loadImage(
 
-
-function gameEmbed(game, revealDealer = false) {
-
-
-    const files = [];
-
-
-    const playerImages = [];
-
-    const dealerImages = [];
-
-
-
-    // PLAYER CARDS
-
-    for (const card of game.player) {
-
-
-        const code =
-            getCardCode(card);
-
-
-
-        files.push(
-
-            new AttachmentBuilder(
-
-                getCardPath(card),
-
-                {
-                    name:
-                    `${code}.png`
-                }
-
+            path.join(
+                process.cwd(),
+                "assets",
+                "blackjack",
+                "table.png"
             )
 
         );
 
 
 
-        playerImages.push(
-
-            `attachment://${code}.png`
-
-        );
-
-
-    }
-
+    ctx.drawImage(
+        table,
+        0,
+        0,
+        900,
+        500
+    );
 
 
 
+    // Dealer cards
 
-    // DEALER CARDS
-
-    if (revealDealer) {
-
-
-        for (const card of game.dealer) {
+    let dx = 300;
 
 
-            const code =
-                getCardCode(card);
+    for(
+        let i = 0;
+        i < game.dealer.length;
+        i++
+    ){
 
 
+        if(
+            i === 0 &&
+            !revealDealer
+        ){
 
-            files.push(
+            const back =
+                await Canvas.loadImage(
 
-                new AttachmentBuilder(
+                    path.join(
+                        process.cwd(),
+                        "assets",
+                        "blackjack",
+                        "BACK.png"
+                    )
 
-                    getCardPath(card),
+                );
 
-                    {
-                        name:
-                        `${code}.png`
-                    }
 
-                )
-
+            ctx.drawImage(
+                back,
+                dx,
+                60,
+                100,
+                140
             );
 
 
+        } else {
 
-            dealerImages.push(
 
-                `attachment://${code}.png`
-
+            await drawCard(
+                ctx,
+                game.dealer[i],
+                dx,
+                60
             );
 
 
         }
 
 
-    } else {
-
-
-        files.push(
-
-            new AttachmentBuilder(
-
-                path.join(
-
-                    process.cwd(),
-
-                    "assets",
-
-                    "blackjack",
-
-                    "BACK.png"
-
-                ),
-
-                {
-                    name:
-                    "BACK.png"
-                }
-
-            )
-
-        );
-
-
-
-        dealerImages.push(
-
-            "attachment://BACK.png"
-
-        );
-
-
-
-        const second =
-            getCardCode(
-                game.dealer[1]
-            );
-
-
-
-        files.push(
-
-            new AttachmentBuilder(
-
-                getCardPath(
-                    game.dealer[1]
-                ),
-
-                {
-                    name:
-                    `${second}.png`
-                }
-
-            )
-
-        );
-
-
-
-        dealerImages.push(
-
-            `attachment://${second}.png`
-
-        );
+        dx += 110;
 
     }
 
 
+
+
+    // Player cards
+
+    let px = 300;
+
+
+    for(
+        const card of game.player
+    ){
+
+        await drawCard(
+            ctx,
+            card,
+            px,
+            300
+        );
+
+
+        px += 110;
+
+    }
+
+
+
+
+
+    ctx.font =
+        "bold 35px Arial";
+
+
+    ctx.fillStyle =
+        "white";
+
+
+    ctx.fillText(
+
+        `Bet: ${game.bet}`,
+
+        40,
+        60
+
+    );
+
+
+
+    const buffer =
+        canvas.toBuffer();
+
+
+
+    const attachment =
+        new AttachmentBuilder(
+
+            buffer,
+
+            {
+                name:
+                "blackjack.png"
+            }
+
+        );
 
 
 
@@ -230,33 +222,9 @@ function gameEmbed(game, revealDealer = false) {
             "🃏 Blackjack"
         )
 
-        .addFields(
-
-            {
-                name:
-                "Dealer",
-
-                value:
-                dealerImages.join(" ")
-            },
-
-
-            {
-                name:
-                "Player",
-
-                value:
-                playerImages.join(" ")
-            }
-
-        )
-
-        .setFooter({
-
-            text:
-            `Bet: ${game.bet} Points`
-
-        });
+        .setImage(
+            "attachment://blackjack.png"
+        );
 
 
 
@@ -266,16 +234,17 @@ function gameEmbed(game, revealDealer = false) {
             embed
         ],
 
-        files
+        files:[
+            attachment
+        ]
 
     };
+
 
 }
 
 
 
 module.exports = {
-
     gameEmbed
-
 };
