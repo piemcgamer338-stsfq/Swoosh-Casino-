@@ -1,230 +1,56 @@
-const {
-    AttachmentBuilder,
-    EmbedBuilder
-} = require("discord.js");
+function randomCard() {
 
-const {
-    createCanvas,
-    loadImage
-} = require("@napi-rs/canvas");
-
-const path = require("path");
+    const suits = [
+        "C",
+        "D",
+        "H",
+        "S"
+    ];
 
 
-async function drawCard(ctx, card, x, y) {
+    const values = [
+        "A",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "J",
+        "Q",
+        "K"
+    ];
 
 
-    const file =
-        path.join(
-            process.cwd(),
-            "assets",
-            "blackjack",
-            card.image
-        );
-
-
-    const img =
-        await loadImage(file);
-
-
-    ctx.drawImage(
-        img,
-        x,
-        y,
-        100,
-        140
-    );
-
-}
-
-
-
-
-async function gameEmbed(game, revealDealer = false) {
-
-
-    const canvas =
-        createCanvas(
-            900,
-            500
-        );
-
-
-    const ctx =
-        canvas.getContext("2d");
-
-
-
-    const table =
-        await loadImage(
-
-            path.join(
-                process.cwd(),
-                "assets",
-                "blackjack",
-                "table.png"
+    const suit =
+        suits[
+            Math.floor(
+                Math.random() * suits.length
             )
-
-        );
-
+        ];
 
 
-    ctx.drawImage(
-        table,
-        0,
-        0,
-        900,
-        500
-    );
-
-
-
-    // Dealer cards
-
-    let dealerX = 300;
-
-
-    for (
-        let i = 0;
-        i < game.dealer.length;
-        i++
-    ) {
-
-
-        if (
-            i === 0 &&
-            !revealDealer
-        ) {
-
-
-            const back =
-                await loadImage(
-
-                    path.join(
-                        process.cwd(),
-                        "assets",
-                        "blackjack",
-                        "BACK.png"
-                    )
-
-                );
-
-
-            ctx.drawImage(
-                back,
-                dealerX,
-                60,
-                100,
-                140
-            );
-
-
-        } else {
-
-
-            await drawCard(
-                ctx,
-                game.dealer[i],
-                dealerX,
-                60
-            );
-
-
-        }
-
-
-        dealerX += 110;
-
-    }
-
-
-
-
-    // Player cards
-
-    let playerX = 300;
-
-
-    for (
-        const card of game.player
-    ) {
-
-
-        await drawCard(
-            ctx,
-            card,
-            playerX,
-            300
-        );
-
-
-        playerX += 110;
-
-
-    }
-
-
-
-
-
-    ctx.font =
-        "bold 30px Arial";
-
-
-    ctx.fillStyle =
-        "white";
-
-
-    ctx.fillText(
-        `BET: ${game.bet}`,
-        40,
-        50
-    );
-
-
-
-    const buffer =
-        canvas.toBuffer(
-            "image/png"
-        );
-
-
-
-    const attachment =
-        new AttachmentBuilder(
-            buffer,
-            {
-                name:
-                "blackjack.png"
-            }
-        );
-
-
-
-    const embed =
-        new EmbedBuilder()
-
-        .setColor("#006400")
-
-        .setTitle(
-            "🃏 Blackjack"
-        )
-
-        .setImage(
-            "attachment://blackjack.png"
-        );
+    const value =
+        values[
+            Math.floor(
+                Math.random() * values.length
+            )
+        ];
 
 
 
     return {
 
-        embeds:[
-            embed
-        ],
+        suit,
 
-        files:[
-            attachment
-        ]
+        value,
+
+
+        image:
+            `${suit}${value}.png`
 
     };
 
@@ -232,6 +58,157 @@ async function gameEmbed(game, revealDealer = false) {
 
 
 
+
+function handValue(hand) {
+
+    let total = 0;
+
+    let aces = 0;
+
+
+
+    for (const card of hand) {
+
+
+        if (card.value === "A") {
+
+            total += 11;
+
+            aces++;
+
+
+        } else if (
+            ["J","Q","K"]
+            .includes(card.value)
+        ) {
+
+
+            total += 10;
+
+
+        } else {
+
+
+            total += Number(card.value);
+
+
+        }
+
+    }
+
+
+
+    while (
+        total > 21 &&
+        aces > 0
+    ) {
+
+        total -= 10;
+
+        aces--;
+
+    }
+
+
+
+    return total;
+
+}
+
+
+
+
+function isBlackjack(hand) {
+
+    return (
+        hand.length === 2 &&
+        handValue(hand) === 21
+    );
+
+}
+
+
+
+
+function isBust(hand) {
+
+    return handValue(hand) > 21;
+
+}
+
+
+
+
+function dealerPlay(hand) {
+
+
+    while (
+        handValue(hand) < 17
+    ) {
+
+
+        hand.push(
+            randomCard()
+        );
+
+
+    }
+
+
+    return hand;
+
+}
+
+
+
+
+function getResult(player,dealer) {
+
+
+    const p =
+        handValue(player);
+
+
+    const d =
+        handValue(dealer);
+
+
+
+    if(p > 21)
+        return "lose";
+
+
+    if(d > 21)
+        return "win";
+
+
+    if(p > d)
+        return "win";
+
+
+    if(d > p)
+        return "lose";
+
+
+    return "push";
+
+}
+
+
+
+
 module.exports = {
-    gameEmbed
+
+    randomCard,
+
+    handValue,
+
+    isBlackjack,
+
+    isBust,
+
+    dealerPlay,
+
+    getResult
+
 };
