@@ -21,17 +21,21 @@ module.exports = {
             });
         }
 
-        userService.getUser(target.id);
+        await userService.getUser(target.id);
 
-        const user = db.prepare(
-            "SELECT force_lose FROM users WHERE discord_id = ?"
-        ).get(target.id);
+        const result = await db.query(
+            "SELECT force_lose FROM users WHERE discord_id = $1",
+            [target.id]
+        );
+
+        const user = result.rows[0];
 
         const newValue = user.force_lose ? 0 : 1;
 
-        db.prepare(
-            "UPDATE users SET force_lose = ? WHERE discord_id = ?"
-        ).run(newValue, target.id);
+        await db.query(
+            "UPDATE users SET force_lose = $1 WHERE discord_id = $2",
+            [newValue, target.id]
+        );
 
         return message.reply({
             embeds: [
