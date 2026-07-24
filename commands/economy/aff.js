@@ -27,10 +27,17 @@ module.exports = {
             );
         }
 
-        // Give player 4 Points
+        // Reward referred user
         await balanceService.addBalance(
             message.author.id,
             4,
+            "affiliate_bonus"
+        );
+
+        // Reward affiliate owner
+        await balanceService.addBalance(
+            result.owner.discordId,
+            5,
             "affiliate_reward"
         );
 
@@ -38,6 +45,8 @@ module.exports = {
 `✅ Affiliate redeemed!
 
 🎁 You received **4 Points**.
+
+👤 The owner of this code received **5 Points**.
 
 You are now permanently referred by **${result.owner.affiliateCode}**.
 
