@@ -18,12 +18,12 @@ module.exports = {
         .setColor("#00ff99")
 
         .setTitle(
-            "🎰 Swoosh Bet Help"
+            " Swoosh Bet Help"
         )
 
         .setDescription(
 `
-Welcome to **Swoosh Bet** 🎲
+Welcome to **Swoosh Bet** 
 
 Use the commands below to play and manage your account.
 `
@@ -34,17 +34,13 @@ Use the commands below to play and manage your account.
         .addFields(
 
             {
-                name: "🎮 GAMES",
+                name: " GAMES",
                 value:
 `
 > .limbo [amount] [multiplier]
-
 > .coinflip [amount] [heads/tails]
-
 > .blackjack [amount]
-
 > .mines [amount] [1-24 bombs]
-
 > .roulette [amount] [bet]
 `,
                 inline: true
@@ -53,19 +49,14 @@ Use the commands below to play and manage your account.
 
 
             {
-                name: "💰 UTILITY",
+                name: " UTILITY",
                 value:
 `
 > .deposit
-
 > .withdraw [amount] [address]
-
 > .balance [user]
-
 > .tip [user] [amount]
-
 > .affiliate
-
 > .aff [code]
 `,
                 inline: true
@@ -74,12 +65,11 @@ Use the commands below to play and manage your account.
 
 
             {
-                name: "📊 STATS",
+                name: " STATS",
                 value:
 `
 > .stats [user]
-
-> .leaderboard
+> .leaderboard / .lb 
 `,
                 inline: true
             },
@@ -87,13 +77,11 @@ Use the commands below to play and manage your account.
 
 
             {
-                name: "🧵 THREADS",
+                name: " THREADS",
                 value:
 `
 > .thread create
-
 > .thread add [user]
-
 > .thread remove [user]
 `,
                 inline: true
@@ -102,11 +90,10 @@ Use the commands below to play and manage your account.
 
 
             {
-                name: "🎁 REWARDS",
+                name: " REWARDS",
                 value:
 `
 > .rakeback
-
 > .hourly
 `,
                 inline: true
@@ -115,12 +102,12 @@ Use the commands below to play and manage your account.
 
 
             {
-                name: "⚙️ ADMIN",
+                name: "ADMIN",
                 value:
 `
 > .setwin [channel]
-
-> .addbal [user] [amount]
+> .checkbal [user] 
+> .depocheck [addy]
 `,
                 inline: true
             }
@@ -132,7 +119,7 @@ Use the commands below to play and manage your account.
         .setFooter({
 
             text:
-            "Swoosh Bet • Fair games • Good luck 🎰"
+            "Swoosh Bet • Fair games • Good luck "
 
         });
 
