@@ -7,12 +7,14 @@ function startRoulette(userId, amount) {
     });
 }
 
-function addBet(userId, type) {
+function addBet(userId, bet) {
     const game = activeRoulette.get(userId);
+
     if (!game) return false;
 
-    if (!game.bets.includes(type))
-        game.bets.push(type);
+    if (!game.bets.includes(bet)) {
+        game.bets.push(bet);
+    }
 
     return true;
 }
@@ -40,23 +42,23 @@ function checkWin(number, bet) {
     if (bet === "col3")
         return number !== 0 && number % 3 === 0;
 
-    const red = [
+    const redNumbers = [
         1,3,5,7,9,12,14,16,
         18,19,21,23,25,27,
         30,32,34,36
     ];
 
     if (bet === "red")
-        return red.includes(number);
+        return redNumbers.includes(number);
 
     if (bet === "black")
-        return number !== 0 && !red.includes(number);
+        return number !== 0 && !redNumbers.includes(number);
 
     if (bet === "odd")
-        return number !== 0 && number % 2;
+        return number !== 0 && number % 2 === 1;
 
     if (bet === "even")
-        return number !== 0 && !(number % 2);
+        return number !== 0 && number % 2 === 0;
 
     if (bet === "low")
         return number >= 1 && number <= 16;
@@ -67,10 +69,15 @@ function checkWin(number, bet) {
     return false;
 }
 
-function payout(type){
+function payout(bet) {
 
-    if(type.startsWith("col"))
+    if (
+        bet === "col1" ||
+        bet === "col2" ||
+        bet === "col3"
+    ) {
         return 3;
+    }
 
     return 2;
 }
