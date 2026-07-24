@@ -3,59 +3,80 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
-const Canvas = require("@napi-rs/canvas");
+const {
+    createCanvas,
+    loadImage
+} = require("@napi-rs/canvas");
+
 const path = require("path");
-
-
-function getCardCode(card) {
-
-    const suits = {
-        "♣":"C",
-        "♦":"D",
-        "♥":"H",
-        "♠":"S"
-    };
-
-    return suits[card.suit] + card.value;
-
-}
 
 
 
 async function drawCard(ctx, card, x, y) {
 
-    const code = getCardCode(card);
 
-    const img = await Canvas.loadImage(
+    if (!card || !card.image) {
 
+        console.log(
+            "CARD IMAGE MISSING:",
+            card
+        );
+
+        return;
+
+    }
+
+
+
+    const filePath =
         path.join(
-            process.cwd(),
-            "assets",
-            "blackjack",
-            `${code}.png`
-        )
 
-    );
+            process.cwd(),
+
+            "assets",
+
+            "blackjack",
+
+            card.image
+
+        );
+
+
+
+    const img =
+        await loadImage(filePath);
+
 
 
     ctx.drawImage(
+
         img,
+
         x,
+
         y,
+
         100,
+
         140
+
     );
+
 
 }
 
 
 
 
-async function gameEmbed(game, revealDealer=false) {
+
+async function gameEmbed(
+    game,
+    revealDealer = false
+) {
 
 
     const canvas =
-        Canvas.createCanvas(
+        createCanvas(
             900,
             500
         );
@@ -67,13 +88,18 @@ async function gameEmbed(game, revealDealer=false) {
 
 
     const table =
-        await Canvas.loadImage(
+        await loadImage(
 
             path.join(
+
                 process.cwd(),
+
                 "assets",
+
                 "blackjack",
+
                 "table.png"
+
             )
 
         );
@@ -81,93 +107,135 @@ async function gameEmbed(game, revealDealer=false) {
 
 
     ctx.drawImage(
+
         table,
+
         0,
+
         0,
+
         900,
+
         500
+
     );
 
 
 
-    // Dealer cards
-
-    let dx = 300;
 
 
-    for(
+    // DEALER CARDS
+
+    let dealerX = 300;
+
+
+
+    for (
         let i = 0;
         i < game.dealer.length;
         i++
-    ){
+    ) {
 
 
-        if(
+
+        if (
             i === 0 &&
             !revealDealer
-        ){
+        ) {
+
 
             const back =
-                await Canvas.loadImage(
+                await loadImage(
 
                     path.join(
+
                         process.cwd(),
+
                         "assets",
+
                         "blackjack",
+
                         "BACK.png"
+
                     )
 
                 );
 
 
+
             ctx.drawImage(
+
                 back,
-                dx,
+
+                dealerX,
+
                 60,
+
                 100,
+
                 140
+
             );
+
 
 
         } else {
 
 
             await drawCard(
+
                 ctx,
+
                 game.dealer[i],
-                dx,
+
+                dealerX,
+
                 60
+
             );
 
 
         }
 
 
-        dx += 110;
+
+        dealerX += 110;
+
 
     }
 
 
 
 
-    // Player cards
-
-    let px = 300;
 
 
-    for(
+
+    // PLAYER CARDS
+
+    let playerX = 300;
+
+
+
+    for (
         const card of game.player
-    ){
+    ) {
+
 
         await drawCard(
+
             ctx,
+
             card,
-            px,
+
+            playerX,
+
             300
+
         );
 
 
-        px += 110;
+        playerX += 110;
+
 
     }
 
@@ -175,27 +243,51 @@ async function gameEmbed(game, revealDealer=false) {
 
 
 
+
+
+    // TEXT
+
     ctx.font =
-        "bold 35px Arial";
+        "bold 30px Arial";
 
 
     ctx.fillStyle =
         "white";
 
 
+
     ctx.fillText(
 
-        `Bet: ${game.bet}`,
+        `BET: ${game.bet}`,
 
         40,
-        60
+
+        50
 
     );
 
 
 
+    ctx.fillText(
+
+        `PLAYER: ${game.player.length} CARDS`,
+
+        40,
+
+        450
+
+    );
+
+
+
+
+
+
+
     const buffer =
-        canvas.toBuffer();
+        canvas.toBuffer(
+            "image/png"
+        );
 
 
 
@@ -213,10 +305,12 @@ async function gameEmbed(game, revealDealer=false) {
 
 
 
+
+
     const embed =
         new EmbedBuilder()
 
-        .setColor("#075e28")
+        .setColor("#008000")
 
         .setTitle(
             "🃏 Blackjack"
@@ -225,6 +319,7 @@ async function gameEmbed(game, revealDealer=false) {
         .setImage(
             "attachment://blackjack.png"
         );
+
 
 
 
@@ -246,5 +341,7 @@ async function gameEmbed(game, revealDealer=false) {
 
 
 module.exports = {
+
     gameEmbed
+
 };
