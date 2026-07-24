@@ -17,7 +17,7 @@
     "dotenv": "^17.2.2",
     "humanize-duration": "^3.33.1",
     "luxon": "^3.7.2",
-    "litecore-lib": "^0.15.0",
+    "litecore-lib": "^0.14.0",
     "pg": "^8.13.1",
     "uuid": "^11.1.0"
   },
