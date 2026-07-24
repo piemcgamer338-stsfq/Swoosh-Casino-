@@ -1,7 +1,5 @@
 const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    StringSelectMenuBuilder
+    EmbedBuilder
 } = require("discord.js");
 
 
@@ -12,98 +10,131 @@ module.exports = {
     aliases: ["h"],
 
 
-
-    async execute(message,args,client){
-
-
-        const commands =
-            client.commands;
+    async execute(message) {
 
 
-
-        const categories = {};
-
-
-
-        commands.forEach(cmd=>{
-
-
-            const category =
-                cmd.category || "Other";
-
-
-            if(!categories[category])
-                categories[category] = [];
-
-
-
-            categories[category].push(cmd);
-
-
-        });
-
-
-
-
-
-        const embed =
-        new EmbedBuilder()
+        const embed = new EmbedBuilder()
 
         .setColor("#00ff99")
 
         .setTitle(
-            "🤖 Swoosh Bet Help"
+            "🎰 Swoosh Bet Help"
         )
 
         .setDescription(
 `
-Welcome to **Swoosh Bet** 🎰
+Welcome to **Swoosh Bet** 🎲
 
-Select a category below to view commands.
-
-Total Commands: **${commands.size}**
+Use the commands below to play and manage your account.
 `
-        );
-
-
-
-
-
-
-
-        const menu =
-        new StringSelectMenuBuilder()
-
-        .setCustomId(
-            "help_menu"
         )
 
-        .setPlaceholder(
-            "Choose a category"
+
+
+        .addFields(
+
+            {
+                name: "🎮 GAMES",
+                value:
+`
+> .limbo [amount] [multiplier]
+
+> .coinflip [amount] [heads/tails]
+
+> .blackjack [amount]
+
+> .mines [amount] [1-24 bombs]
+
+> .roulette [amount] [bet]
+`,
+                inline: true
+            },
+
+
+
+            {
+                name: "💰 UTILITY",
+                value:
+`
+> .deposit
+
+> .withdraw [amount] [address]
+
+> .balance [user]
+
+> .tip [user] [amount]
+
+> .affiliate
+
+> .aff [code]
+`,
+                inline: true
+            },
+
+
+
+            {
+                name: "📊 STATS",
+                value:
+`
+> .stats [user]
+
+> .leaderboard
+`,
+                inline: true
+            },
+
+
+
+            {
+                name: "🧵 THREADS",
+                value:
+`
+> .thread create
+
+> .thread add [user]
+
+> .thread remove [user]
+`,
+                inline: true
+            },
+
+
+
+            {
+                name: "🎁 REWARDS",
+                value:
+`
+> .rakeback
+
+> .hourly
+`,
+                inline: true
+            },
+
+
+
+            {
+                name: "⚙️ ADMIN",
+                value:
+`
+> .setwin [channel]
+
+> .addbal [user] [amount]
+`,
+                inline: true
+            }
+
+
         )
 
-        .addOptions(
 
-            Object.keys(categories)
-            .map(cat=>({
+        .setFooter({
 
-                label:cat,
+            text:
+            "Swoosh Bet • Fair games • Good luck 🎰"
 
-                value:cat
-
-            }))
-
-        );
-
-
-
-
-
-        const row =
-        new ActionRowBuilder()
-        .addComponents(menu);
-
-
+        });
 
 
 
@@ -111,14 +142,9 @@ Total Commands: **${commands.size}**
 
             embeds:[
                 embed
-            ],
-
-            components:[
-                row
             ]
 
         });
-
 
 
     }
