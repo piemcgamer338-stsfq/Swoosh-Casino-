@@ -3,7 +3,7 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
-const Canvas = require("canvas");
+const Canvas = require("@napi-rs/canvas");
 const path = require("path");
 
 
