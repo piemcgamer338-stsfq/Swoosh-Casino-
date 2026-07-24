@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@discordjs/builders": "^1.13.0",
+    "litecore-lib": "^0.15.0",
     "@napi-rs/canvas": "^0.1.80",
     "discord.js": "^14.22.1",
     "dotenv": "^17.2.2",
