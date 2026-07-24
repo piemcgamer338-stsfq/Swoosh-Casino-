@@ -1,11 +1,13 @@
 function randomCard() {
 
+
     const suits = [
-        "C",
-        "D",
-        "H",
-        "S"
+        "♣",
+        "♦",
+        "♥",
+        "♠"
     ];
+
 
 
     const values = [
@@ -25,32 +27,23 @@ function randomCard() {
     ];
 
 
-    const suit =
-        suits[
-            Math.floor(
-                Math.random() * suits.length
-            )
-        ];
-
-
-    const value =
-        values[
-            Math.floor(
-                Math.random() * values.length
-            )
-        ];
-
-
 
     return {
 
-        suit,
+        suit:
+            suits[
+                Math.floor(
+                    Math.random() * suits.length
+                )
+            ],
 
-        value,
 
-
-        image:
-            `${suit}${value}.png`
+        value:
+            values[
+                Math.floor(
+                    Math.random() * values.length
+                )
+            ]
 
     };
 
@@ -59,7 +52,9 @@ function randomCard() {
 
 
 
+
 function handValue(hand) {
+
 
     let total = 0;
 
@@ -72,13 +67,14 @@ function handValue(hand) {
 
         if (card.value === "A") {
 
+
             total += 11;
 
             aces++;
 
 
         } else if (
-            ["J","Q","K"]
+            ["J", "Q", "K"]
             .includes(card.value)
         ) {
 
@@ -98,14 +94,17 @@ function handValue(hand) {
 
 
 
+
     while (
         total > 21 &&
         aces > 0
     ) {
 
+
         total -= 10;
 
         aces--;
+
 
     }
 
@@ -118,11 +117,16 @@ function handValue(hand) {
 
 
 
+
 function isBlackjack(hand) {
 
+
     return (
+
         hand.length === 2 &&
+
         handValue(hand) === 21
+
     );
 
 }
@@ -130,11 +134,14 @@ function isBlackjack(hand) {
 
 
 
+
 function isBust(hand) {
+
 
     return handValue(hand) > 21;
 
 }
+
 
 
 
@@ -155,6 +162,7 @@ function dealerPlay(hand) {
     }
 
 
+
     return hand;
 
 }
@@ -162,37 +170,52 @@ function dealerPlay(hand) {
 
 
 
-function getResult(player,dealer) {
+
+function getResult(
+    player,
+    dealer
+) {
 
 
-    const p =
+    const playerTotal =
         handValue(player);
 
 
-    const d =
+
+    const dealerTotal =
         handValue(dealer);
 
 
 
-    if(p > 21)
+
+    if (playerTotal > 21)
+
         return "lose";
 
 
-    if(d > 21)
+
+    if (dealerTotal > 21)
+
         return "win";
 
 
-    if(p > d)
+
+    if (playerTotal > dealerTotal)
+
         return "win";
 
 
-    if(d > p)
+
+    if (dealerTotal > playerTotal)
+
         return "lose";
+
 
 
     return "push";
 
 }
+
 
 
 
