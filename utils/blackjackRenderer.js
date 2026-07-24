@@ -8,13 +8,45 @@ const {
 const path = require("path");
 
 
-function cardFile(card) {
+function getCardName(card) {
+
+    if (typeof card === "string") {
+        return card;
+    }
+
+
+    if (card.name) {
+        return card.name;
+    }
+
+
+    if (card.code) {
+        return card.code;
+    }
+
+
+    if (card.rank && card.suit) {
+
+        return `${card.suit}${card.rank}`;
+
+    }
+
+
+    return "UNKNOWN";
+
+}
+
+
+
+function cardPath(card) {
+
+    const name = getCardName(card);
 
     return path.join(
         process.cwd(),
         "assets",
         "blackjack",
-        `${card}.png`
+        `${name}.png`
     );
 
 }
@@ -26,44 +58,54 @@ function gameEmbed(game, revealDealer = false) {
 
     const files = [];
 
-    const playerImages = [];
-    const dealerImages = [];
+    const playerCards = [];
+    const dealerCards = [];
 
 
-
-    // PLAYER CARDS
 
     for (const card of game.player) {
 
-        const file = new AttachmentBuilder(
-            cardFile(card)
+        const name = getCardName(card);
+
+
+        files.push(
+            new AttachmentBuilder(
+                cardPath(card),
+                {
+                    name:`${name}.png`
+                }
+            )
         );
 
-        files.push(file);
 
-        playerImages.push(
-            `attachment://${card}.png`
+        playerCards.push(
+            `attachment://${name}.png`
         );
 
     }
 
 
 
-    // DEALER CARDS
-
     if (revealDealer) {
 
 
         for (const card of game.dealer) {
 
-            const file = new AttachmentBuilder(
-                cardFile(card)
+            const name = getCardName(card);
+
+
+            files.push(
+                new AttachmentBuilder(
+                    cardPath(card),
+                    {
+                        name:`${name}.png`
+                    }
+                )
             );
 
-            files.push(file);
 
-            dealerImages.push(
-                `attachment://${card}.png`
+            dealerCards.push(
+                `attachment://${name}.png`
             );
 
         }
@@ -72,27 +114,53 @@ function gameEmbed(game, revealDealer = false) {
     } else {
 
 
-        const hidden = new AttachmentBuilder(
+        files.push(
 
-            cardFile("BACK")
+            new AttachmentBuilder(
+
+                path.join(
+                    process.cwd(),
+                    "assets",
+                    "blackjack",
+                    "BACK.png"
+                ),
+
+                {
+                    name:"BACK.png"
+                }
+
+            )
 
         );
 
-        files.push(hidden);
 
-
-        dealerImages.push(
+        dealerCards.push(
             "attachment://BACK.png"
         );
 
 
-        dealerImages.push(
-            `attachment://${game.dealer[1]}.png`
+
+        const second =
+        getCardName(game.dealer[1]);
+
+
+        files.push(
+
+            new AttachmentBuilder(
+                cardPath(game.dealer[1]),
+                {
+                    name:`${second}.png`
+                }
+            )
+
         );
 
 
-    }
+        dealerCards.push(
+            `attachment://${second}.png`
+        );
 
+    }
 
 
 
@@ -112,34 +180,26 @@ function gameEmbed(game, revealDealer = false) {
                 name:"Dealer",
 
                 value:
-                dealerImages
-                .map(x=>`🂠 ${x}`)
-                .join("\n")
+                dealerCards.join("\n")
+
             },
 
 
             {
-
                 name:"Player",
 
                 value:
-                playerImages
-                .join("\n")
+                playerCards.join("\n")
 
             }
 
         )
 
 
-        .setDescription(
-
-`
-💰 Bet: **${game.bet} Points**
-
-Hit or Stand?
-`
-
-        );
+        .setFooter({
+            text:
+            `Bet: ${game.bet} Points`
+        });
 
 
 
@@ -153,13 +213,10 @@ Hit or Stand?
 
     };
 
-
 }
 
 
 
 module.exports = {
-
     gameEmbed
-
 };
