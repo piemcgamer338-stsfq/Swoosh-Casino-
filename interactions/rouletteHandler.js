@@ -30,10 +30,12 @@ async function select(interaction, bet) {
                 .setColor("Red")
                 .setTitle("🎰 Roulette")
                 .setDescription(
-`Bet Per Selection: **${game.amount}**
+`**Bet Per Selection:** ${game.amount}
 
-Selected Bets:
+**Selected Bets:**
 ${game.bets.join(", ")}
+
+**Total Bet:** ${game.amount * game.bets.length}
 
 Press **START** when ready.`
                 )
@@ -54,9 +56,33 @@ async function start(interaction) {
         });
     }
 
+    const totalBet = game.amount * game.bets.length;
+
+    const hasMoney = await balanceService.hasBalance(
+        interaction.user.id,
+        totalBet
+    );
+
+    if (!hasMoney) {
+
+        clearRoulette(interaction.user.id);
+
+        return interaction.reply({
+            content: "❌ You don't have enough balance.",
+            ephemeral: true
+        });
+
+    }
+
+    await balanceService.removeBalance(
+        interaction.user.id,
+        totalBet,
+        "roulette_bet"
+    );
+
     await interaction.deferUpdate();
 
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     const number = spinRoulette();
 
@@ -65,17 +91,21 @@ async function start(interaction) {
     for (const bet of game.bets) {
 
         if (checkWin(number, bet)) {
+
             winnings += game.amount * payout(bet);
+
         }
 
     }
 
     if (winnings > 0) {
+
         await balanceService.addBalance(
             interaction.user.id,
             winnings,
             "roulette_win"
         );
+
     }
 
     clearRoulette(interaction.user.id);
@@ -84,16 +114,15 @@ async function start(interaction) {
         .setColor(winnings ? "Green" : "Red")
         .setTitle("🎰 Roulette Result")
         .setDescription(
-`# ${number}
+`# 🎲 Number: **${number}**
 
-Bet Per Selection: **${game.amount}**
-
-Selections:
-${game.bets.join(", ")}
+**Bet Per Selection:** ${game.amount}
+**Selections:** ${game.bets.join(", ")}
+**Total Bet:** ${totalBet}
 
 ${winnings
-? `✅ Won **${winnings}**`
-: `❌ Lost **${game.amount * game.bets.length}**`}`
+? `✅ You won **${winnings}**`
+: `❌ You lost **${totalBet}**`}`
         );
 
     return interaction.editReply({
